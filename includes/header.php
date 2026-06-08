@@ -1,5 +1,8 @@
 <?php
 // includes/header.php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
@@ -55,6 +58,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <li class="nav-item">
                         <a class="nav-link <?php echo ($current_page == 'community.php') ? 'active' : ''; ?>"
                             href="community.php">Communauté</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin/index.php">
+                            <i class="bi bi-shield-lock-fill me-1 <?php echo isset($_SESSION['admin_logged']) && $_SESSION['admin_logged'] === true ? 'text-success' : 'text-secondary'; ?>"></i>Admin
+                        </a>
                     </li>
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                         <a class="btn btn-outline-info rounded-pill d-flex align-items-center px-4 py-2 text-dark font-weight-bold <?php echo ($current_page == 'chatbot.php') ? 'active bg-info-subtle' : ''; ?>"

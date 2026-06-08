@@ -77,6 +77,29 @@ try {
         FOREIGN KEY (`question_id`) REFERENCES `forum_questions`(`id`) ON DELETE CASCADE
     ) ENGINE=InnoDB;");
 
+    // Admins table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `admins` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `username` VARCHAR(100) NOT NULL UNIQUE,
+        `password_hash` VARCHAR(255) NOT NULL,
+        `email` VARCHAR(255) NOT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;");
+
+    // Seed admin if empty
+    $stmtAdmin = $pdo->query("SELECT COUNT(*) FROM `admins`");
+    if ($stmtAdmin->fetchColumn() == 0) {
+        $username = 'admin';
+        $email = 'admin@hydrolicia.dz';
+        $passHash = password_hash('AdminHydro2026!', PASSWORD_BCRYPT);
+        $insertAdmin = $pdo->prepare("INSERT INTO `admins` (`username`, `password_hash`, `email`) VALUES (:username, :password, :email)");
+        $insertAdmin->execute([
+            'username' => $username,
+            'password' => $passHash,
+            'email' => $email
+        ]);
+    }
+
     // Add some sample questions to the forum if it is empty
     $stmt = $pdo->query("SELECT COUNT(*) FROM `forum_questions`");
     if ($stmt->fetchColumn() == 0) {
