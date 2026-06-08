@@ -3,6 +3,17 @@
 require_once '../config/db.php';
 require_once 'includes/header.php';
 
+// Fetch all trainings for mapping
+$trainings_map = [];
+try {
+    $stmt_tr = $pdo->query("SELECT `code`, `title` FROM `trainings`");
+    while ($row = $stmt_tr->fetch()) {
+        $trainings_map[$row['code']] = $row['title'];
+    }
+} catch (Exception $e) {
+    // Fail silently
+}
+
 // Fetch stats
 $count_registrations = 0;
 $count_consultations_total = 0;
@@ -146,11 +157,11 @@ try {
                                     <td>
                                         <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill">
                                             <?php 
-                                                if ($reg['course_id'] == 'aep') echo 'AEP (EPANET)';
-                                                elseif ($reg['course_id'] == 'assainissement') echo 'Assainissement (SewerGEMS)';
-                                                elseif ($reg['course_id'] == 'irrigation') echo 'Irrigation (CROPWAT)';
-                                                elseif ($reg['course_id'] == 'hecras') echo 'Hydraulique (HEC-RAS)';
-                                                else echo htmlspecialchars($reg['course_id']);
+                                                if (isset($trainings_map[$reg['course_id']])) {
+                                                    echo htmlspecialchars($trainings_map[$reg['course_id']]);
+                                                } else {
+                                                    echo htmlspecialchars($reg['course_id']);
+                                                }
                                             ?>
                                         </span>
                                     </td>

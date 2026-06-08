@@ -326,6 +326,18 @@ $active_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li class="menu-item">
+                <a href="trainings.php" class="menu-link <?php echo ($active_page == 'trainings.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-book"></i>
+                    <span>Catalogue Formations</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="experts.php" class="menu-link <?php echo ($active_page == 'experts.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-people"></i>
+                    <span>Gestion Experts</span>
+                </a>
+            </li>
+            <li class="menu-item">
                 <a href="forum.php" class="menu-link <?php echo ($active_page == 'forum.php') ? 'active' : ''; ?>">
                     <i class="bi bi-chat-square-text"></i>
                     <span>Modération Forum</span>

@@ -12,6 +12,7 @@
                 <p class="mb-4">
                     La première plateforme digitale intelligente dédiée à la formation, au conseil technique et à la numérisation des services d'ingénierie hydraulique en Algérie.
                 </p>
+                <p class="text-white mb-4"> <i class="bi bi-mortarboard-fill text-info"></i> Partenaire <span class="text-info"> <a href="https://ensh.dz/" target="_blank" class="text-decoration-none text-info"> ENSH</a></span> Blida</p>
                 <div class="eco-banner py-2 px-3 bg-dark-subtle border-start border-info border-3 rounded-2 text-black-50">
                     <h6 class="text-info mb-1"><i class="bi bi-recycle me-2"></i>Engagement Écologique</h6>
                     <small>

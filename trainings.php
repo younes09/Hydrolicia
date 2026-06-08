@@ -1,6 +1,15 @@
 <?php
 require_once 'config/db.php';
 include_once 'includes/header.php';
+
+// Fetch trainings from database
+$trainings = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM `trainings` ORDER BY `id` ASC");
+    $trainings = $stmt->fetchAll();
+} catch (Exception $e) {
+    // Fail silently
+}
 ?>
 
 <div class="container my-5">
@@ -14,133 +23,63 @@ include_once 'includes/header.php';
 
     <!-- Course Cards Grid -->
     <div class="row g-4">
-        <!-- Course 1 -->
-        <div class="col-lg-6">
-            <div class="card hydro-card h-100 p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-primary rounded-pill px-3 py-2">Modélisation AEP</span>
-                    <span class="text-muted"><i class="bi bi-clock me-1"></i> 24 Heures</span>
-                </div>
-                <h3 class="fw-bold mb-2">Alimentation en Eau Potable (EPANET)</h3>
-                <p class="text-secondary small mb-3">
-                    Conception, calage et dimensionnement des réseaux de distribution sous pression.
-                </p>
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <h6 class="fw-bold text-primary mb-2"><i class="bi bi-journal-text me-2"></i>Programme clé :</h6>
-                    <ul class="list-unstyled mb-0 small text-muted">
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Calcul des débits de pointe & dimensionnement des conduites</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Calcul des réservoirs de stockage & stations de pompage</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Modélisation dynamique et calage des pressions sous EPANET</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Analyse des transitoires hydrauliques (coup de bélier)</li>
-                    </ul>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <div>
-                        <span class="text-muted small d-block">Tarif Étudiant / Pro</span>
-                        <strong class="fs-4 text-primary">15 000 DA</strong>
-                    </div>
-                    <button class="btn btn-outline-primary rounded-pill px-4" onclick="openRegisterModal('aep', 'Alimentation en Eau Potable (EPANET)')">
-                        S'inscrire <i class="bi bi-arrow-right-short ms-1"></i>
-                    </button>
+        <?php if (empty($trainings)): ?>
+            <div class="col-12 text-center py-5">
+                <div class="card border-0 shadow-sm p-5 rounded-4">
+                    <i class="bi bi-journal-x fs-1 text-muted mb-3"></i>
+                    <h5 class="fw-bold">Aucune formation disponible</h5>
+                    <p class="text-muted mb-0">Revenez plus tard pour découvrir nos nouveaux programmes.</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Course 2 -->
-        <div class="col-lg-6">
-            <div class="card hydro-card h-100 p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-teal bg-opacity-10 text-teal rounded-pill px-3 py-2" style="background-color: #f0fdfa; color: #0d9488;">Assainissement & Drainage</span>
-                    <span class="text-muted"><i class="bi bi-clock me-1"></i> 30 Heures</span>
-                </div>
-                <h3 class="fw-bold mb-2">Réseaux d'Assainissement (SewerGEMS)</h3>
-                <p class="text-secondary small mb-3">
-                    Dimensionnement des réseaux de collecte des eaux usées et pluviales urbaines.
-                </p>
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <h6 class="fw-bold text-teal mb-2" style="color: #0d9488;"><i class="bi bi-journal-text me-2"></i>Programme clé :</h6>
-                    <ul class="list-unstyled mb-0 small text-muted">
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Calcul des débits d'eaux usées domestiques (normes algériennes)</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Évaluation des débits d'orage par la méthode rationnelle</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Tracé en plan et profil en long (Covadis / Mensura)</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Modélisation hydraulique gravitaire sous SewerGEMS</li>
-                    </ul>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <div>
-                        <span class="text-muted small d-block">Tarif Étudiant / Pro</span>
-                        <strong class="fs-4 text-primary">18 000 DA</strong>
+        <?php else: ?>
+            <?php foreach ($trainings as $course): ?>
+                <?php
+                    // Get program points from newline string
+                    $program_points = array_filter(array_map('trim', explode("\n", $course['program'])));
+                    
+                    // Map badge style
+                    $badge_style = $course['badge_style'];
+                    $text_color_inline = '';
+                    if ($course['badge_style'] == 'bg-teal') {
+                        $badge_style = '';
+                        $text_color_inline = 'style="background-color: #f0fdfa; color: #0d9488;"';
+                    }
+                ?>
+                <div class="col-lg-6">
+                    <div class="card hydro-card h-100 p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <?php if (!empty($course['badge'])): ?>
+                                <span class="badge rounded-pill px-3 py-2 <?php echo htmlspecialchars($badge_style); ?>" <?php echo $text_color_inline; ?>>
+                                    <?php echo htmlspecialchars($course['badge']); ?>
+                                </span>
+                            <?php endif; ?>
+                            <span class="text-muted"><i class="bi bi-clock me-1"></i> <?php echo htmlspecialchars($course['duration']); ?></span>
+                        </div>
+                        <h3 class="fw-bold mb-2"><?php echo htmlspecialchars($course['title']); ?></h3>
+                        <p class="text-secondary small mb-3">
+                            <?php echo htmlspecialchars($course['description']); ?>
+                        </p>
+                        <div class="bg-light p-3 rounded-3 mb-4">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-journal-text me-2"></i>Programme clé :</h6>
+                            <ul class="list-unstyled mb-0 small text-muted">
+                                <?php foreach ($program_points as $point): ?>
+                                    <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i><?php echo htmlspecialchars($point); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <div>
+                                <span class="text-muted small d-block">Tarif Étudiant / Pro</span>
+                                <strong class="fs-4 text-primary"><?php echo htmlspecialchars($course['price']); ?></strong>
+                            </div>
+                            <button class="btn btn-outline-primary rounded-pill px-4" onclick="openRegisterModal('<?php echo htmlspecialchars($course['code']); ?>', '<?php echo htmlspecialchars(addslashes($course['title'])); ?>')">
+                                S'inscrire <i class="bi bi-arrow-right-short ms-1"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button class="btn btn-outline-primary rounded-pill px-4" onclick="openRegisterModal('assainissement', 'Réseaux d\'Assainissement (SewerGEMS)')">
-                        S'inscrire <i class="bi bi-arrow-right-short ms-1"></i>
-                    </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Course 3 -->
-        <div class="col-lg-6">
-            <div class="card hydro-card h-100 p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-success rounded-pill px-3 py-2">Irrigation & Écologie</span>
-                    <span class="text-muted"><i class="bi bi-clock me-1"></i> 20 Heures</span>
-                </div>
-                <h3 class="fw-bold mb-2">Irrigation & Économie d'Eau (CROPWAT)</h3>
-                <p class="text-secondary small mb-3">
-                    Dimensionnement des réseaux d'irrigation et gestion optimale des ressources en eau.
-                </p>
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <h6 class="fw-bold text-success mb-2"><i class="bi bi-journal-text me-2"></i>Programme clé :</h6>
-                    <ul class="list-unstyled mb-0 small text-muted">
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Calcul des besoins en eau des cultures sous CROPWAT</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Conception de systèmes goutte-à-goutte et aspersion</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Calcul hydraulique des conduites de distribution</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Réutilisation des eaux épurées pour l'agriculture (REUSE)</li>
-                    </ul>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <div>
-                        <span class="text-muted small d-block">Tarif Étudiant / Pro</span>
-                        <strong class="fs-4 text-primary">12 000 DA</strong>
-                    </div>
-                    <button class="btn btn-outline-primary rounded-pill px-4" onclick="openRegisterModal('irrigation', 'Irrigation & Économie d\'Eau (CROPWAT)')">
-                        S'inscrire <i class="bi bi-arrow-right-short ms-1"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Course 4 -->
-        <div class="col-lg-6">
-            <div class="card hydro-card h-100 p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Ouvrages & Inondations</span>
-                    <span class="text-muted"><i class="bi bi-clock me-1"></i> 28 Heures</span>
-                </div>
-                <h3 class="fw-bold mb-2">Hydraulique des Cours d'Eau (HEC-RAS)</h3>
-                <p class="text-secondary small mb-3">
-                    Modélisation des écoulements à surface libre et délimitation des zones inondables.
-                </p>
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <h6 class="fw-bold text-warning mb-2" style="color: #d97706;"><i class="bi bi-journal-text me-2"></i>Programme clé :</h6>
-                    <ul class="list-unstyled mb-0 small text-muted">
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Modélisation hydraulique 1D et 2D permanente/non permanente</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Études d'inondation & protection des agglomérations</li>
-                        <li class="mb-1"><i class="bi bi-check2 text-success me-2"></i>Dimensionnement des digues, seuils et canaux d'évacuation</li>
-                        <li><i class="bi bi-check2 text-success me-2"></i>Étude de rupture de barrages (scénarios de sécurité)</li>
-                    </ul>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-auto">
-                    <div>
-                        <span class="text-muted small d-block">Tarif Étudiant / Pro</span>
-                        <strong class="fs-4 text-primary">20 000 DA</strong>
-                    </div>
-                    <button class="btn btn-outline-primary rounded-pill px-4" onclick="openRegisterModal('hecras', 'Hydraulique des Cours d\'Eau (HEC-RAS)')">
-                        S'inscrire <i class="bi bi-arrow-right-short ms-1"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 </div>
 

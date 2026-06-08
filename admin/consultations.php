@@ -38,6 +38,13 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
 $expert_filter = isset($_GET['expert_filter']) ? trim($_GET['expert_filter']) : '';
 $status_filter = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
 
+$experts_list = [];
+try {
+    $experts_list = $pdo->query("SELECT `name` FROM `experts` ORDER BY `name` ASC")->fetchAll();
+} catch (Exception $e) {
+    // Fail silently
+}
+
 try {
     $sql = "SELECT * FROM `consultations`";
     $where_clauses = [];
@@ -95,9 +102,11 @@ try {
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par expert :</label>
             <select name="expert_filter" class="form-select" onchange="this.form.submit()">
                 <option value="">Tous les experts</option>
-                <option value="Dr. Salim Rahal" <?php echo ($expert_filter == 'Dr. Salim Rahal') ? 'selected' : ''; ?>>Dr. Salim Rahal</option>
-                <option value="Ing. Karima Ould-Kadi" <?php echo ($expert_filter == 'Ing. Karima Ould-Kadi') ? 'selected' : ''; ?>>Ing. Karima Ould-Kadi</option>
-                <option value="Ing. Mourad Benyahia" <?php echo ($expert_filter == 'Ing. Mourad Benyahia') ? 'selected' : ''; ?>>Ing. Mourad Benyahia</option>
+                <?php foreach ($experts_list as $exp): ?>
+                    <option value="<?php echo htmlspecialchars($exp['name']); ?>" <?php echo ($expert_filter == $exp['name']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($exp['name']); ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
         </div>
         <div class="col-md-4">

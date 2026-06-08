@@ -86,6 +86,122 @@ try {
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;");
 
+    // Trainings table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `trainings` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `code` VARCHAR(50) NOT NULL UNIQUE,
+        `title` VARCHAR(255) NOT NULL,
+        `duration` VARCHAR(100) NOT NULL,
+        `description` TEXT NOT NULL,
+        `price` VARCHAR(100) NOT NULL,
+        `badge` VARCHAR(100) DEFAULT NULL,
+        `badge_style` VARCHAR(100) DEFAULT 'bg-primary',
+        `program` TEXT NOT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;");
+
+    // Experts table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `experts` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `name` VARCHAR(255) NOT NULL UNIQUE,
+        `specialty` VARCHAR(255) NOT NULL,
+        `bio` TEXT NOT NULL,
+        `avatar_class` VARCHAR(100) DEFAULT 'bi-person-fill-gear',
+        `avatar_color_class` VARCHAR(100) DEFAULT 'primary',
+        `status` VARCHAR(50) DEFAULT 'Disponible',
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB;");
+
+    // Seed trainings if empty
+    $stmtTrainings = $pdo->query("SELECT COUNT(*) FROM `trainings`");
+    if ($stmtTrainings->fetchColumn() == 0) {
+        $insertTraining = $pdo->prepare("INSERT INTO `trainings` (`code`, `title`, `duration`, `description`, `price`, `badge`, `badge_style`, `program`) VALUES (:code, :title, :duration, :description, :price, :badge, :badge_style, :program)");
+        
+        $defaultTrainings = [
+            [
+                'code' => 'aep',
+                'title' => 'Alimentation en Eau Potable (EPANET)',
+                'duration' => '24 Heures',
+                'description' => 'Conception, calage et dimensionnement des réseaux de distribution sous pression.',
+                'price' => '15 000 DA',
+                'badge' => 'Modélisation AEP',
+                'badge_style' => 'bg-primary',
+                'program' => "Calcul des débits de pointe & dimensionnement des conduites\nCalcul des réservoirs de stockage & stations de pompage\nModélisation dynamique et calage des pressions sous EPANET\nAnalyse des transitoires hydrauliques (coup de bélier)"
+            ],
+            [
+                'code' => 'assainissement',
+                'title' => "Réseaux d'Assainissement (SewerGEMS)",
+                'duration' => '30 Heures',
+                'description' => 'Dimensionnement des réseaux de collecte des eaux usées et pluviales urbaines.',
+                'price' => '18 000 DA',
+                'badge' => 'Assainissement & Drainage',
+                'badge_style' => 'bg-teal',
+                'program' => "Calcul des débits d'eaux usées domestiques (normes algériennes)\nÉvaluation des débits d'orage par la méthode rationnelle\nTracé en plan et profil en long (Covadis / Mensura)\nModélisation hydraulique gravitaire sous SewerGEMS"
+            ],
+            [
+                'code' => 'irrigation',
+                'title' => "Irrigation & Économie d'Eau (CROPWAT)",
+                'duration' => '20 Heures',
+                'description' => "Dimensionnement des réseaux d'irrigation et gestion optimale des ressources en eau.",
+                'price' => '12 000 DA',
+                'badge' => 'Irrigation & Écologie',
+                'badge_style' => 'bg-success',
+                'program' => "Calcul des besoins en eau des cultures sous CROPWAT\nConception de systèmes goutte-à-goutte et aspersion\nCalcul hydraulique des conduites de distribution\nRéutilisation des eaux épurées pour l'agriculture (REUSE)"
+            ],
+            [
+                'code' => 'hecras',
+                'title' => "Hydraulique des Cours d'Eau (HEC-RAS)",
+                'duration' => '28 Heures',
+                'description' => "Modélisation des écoulements à surface libre et délimitation des zones inondables.",
+                'price' => '20 000 DA',
+                'badge' => 'Ouvrages & Inondations',
+                'badge_style' => 'bg-warning text-dark',
+                'program' => "Modélisation hydraulique 1D et 2D permanente/non permanente\nÉtudes d'inondation & protection des agglomérations\nDimensionnement des digues, seuils et canaux d'évacuation\nÉtude de rupture de barrages (scénarios de sécurité)"
+            ]
+        ];
+        
+        foreach ($defaultTrainings as $t) {
+            $insertTraining->execute($t);
+        }
+    }
+
+    // Seed experts if empty
+    $stmtExperts = $pdo->query("SELECT COUNT(*) FROM `experts`");
+    if ($stmtExperts->fetchColumn() == 0) {
+        $insertExpert = $pdo->prepare("INSERT INTO `experts` (`name`, `specialty`, `bio`, `avatar_class`, `avatar_color_class`, `status`) VALUES (:name, :specialty, :bio, :avatar_class, :avatar_color_class, :status)");
+        
+        $defaultExperts = [
+            [
+                'name' => 'Dr. Salim Rahal',
+                'specialty' => 'Modélisation AEP, Réseaux sous pression & EPANET',
+                'bio' => "Plus de 15 ans d'expérience dans la conception d'infrastructures hydrauliques majeures en Algérie. Expert en diagnostic de réseaux d'eau potable et maîtrise des fuites.",
+                'avatar_class' => 'bi-person-fill-gear',
+                'avatar_color_class' => 'primary',
+                'status' => 'Disponible'
+            ],
+            [
+                'name' => 'Ing. Karima Ould-Kadi',
+                'specialty' => 'Hydrologie, Crues & Simulation HEC-RAS',
+                'bio' => "Spécialiste de la protection des agglomérations contre les risques d'inondations et de l'aménagement des cours d'eau (oueds). Conception de digues et de bassins d'orage.",
+                'avatar_class' => 'bi-person-fill-lock',
+                'avatar_color_class' => 'warning',
+                'status' => 'Disponible'
+            ],
+            [
+                'name' => 'Ing. Mourad Benyahia',
+                'specialty' => 'Assainissement, Traitement (STEP) & Réutilisation des eaux',
+                'bio' => "Concepteur de stations d'épuration avec intégration d'éco-technologies pour l'agriculture. Expert en étude d'impact environnemental des eaux résiduaires.",
+                'avatar_class' => 'bi-person-fill-check',
+                'avatar_color_class' => 'success',
+                'status' => 'Disponible'
+            ]
+        ];
+        
+        foreach ($defaultExperts as $e) {
+            $insertExpert->execute($e);
+        }
+    }
+
     // Seed admin if empty
     $stmtAdmin = $pdo->query("SELECT COUNT(*) FROM `admins`");
     if ($stmtAdmin->fetchColumn() == 0) {

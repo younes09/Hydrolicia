@@ -6,6 +6,19 @@ require_once 'includes/header.php';
 $message = '';
 $err_message = '';
 
+// Fetch all trainings for mapping and filtering
+$trainings_list = [];
+$trainings_map = [];
+try {
+    $stmt_tr = $pdo->query("SELECT `code`, `title` FROM `trainings` ORDER BY `title` ASC");
+    $trainings_list = $stmt_tr->fetchAll();
+    foreach ($trainings_list as $tr) {
+        $trainings_map[$tr['code']] = $tr['title'];
+    }
+} catch (Exception $e) {
+    // Fail silently
+}
+
 // Check for delete action
 if (isset($_GET['delete'])) {
     $delete_id = intval($_GET['delete']);
@@ -69,10 +82,11 @@ try {
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par module :</label>
             <select name="course_filter" class="form-select" onchange="this.form.submit()">
                 <option value="">Tous les modules</option>
-                <option value="aep" <?php echo ($course_filter == 'aep') ? 'selected' : ''; ?>>AEP (EPANET)</option>
-                <option value="assainissement" <?php echo ($course_filter == 'assainissement') ? 'selected' : ''; ?>>Assainissement (SewerGEMS)</option>
-                <option value="irrigation" <?php echo ($course_filter == 'irrigation') ? 'selected' : ''; ?>>Irrigation (CROPWAT)</option>
-                <option value="hecras" <?php echo ($course_filter == 'hecras') ? 'selected' : ''; ?>>Hydraulique (HEC-RAS)</option>
+                <?php foreach ($trainings_list as $tr): ?>
+                    <option value="<?php echo htmlspecialchars($tr['code']); ?>" <?php echo ($course_filter == $tr['code']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($tr['title']); ?>
+                    </option>
+                <?php endforeach; ?>
             </select>
         </div>
         <div class="col-md-2 mt-4">
@@ -122,11 +136,11 @@ try {
                             <td>
                                 <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2">
                                     <?php 
-                                        if ($reg['course_id'] == 'aep') echo 'AEP (EPANET)';
-                                        elseif ($reg['course_id'] == 'assainissement') echo 'Assainissement (SewerGEMS)';
-                                        elseif ($reg['course_id'] == 'irrigation') echo 'Irrigation (CROPWAT)';
-                                        elseif ($reg['course_id'] == 'hecras') echo 'Hydraulique (HEC-RAS)';
-                                        else echo htmlspecialchars($reg['course_id']);
+                                        if (isset($trainings_map[$reg['course_id']])) {
+                                            echo htmlspecialchars($trainings_map[$reg['course_id']]);
+                                        } else {
+                                            echo htmlspecialchars($reg['course_id']);
+                                        }
                                     ?>
                                 </span>
                             </td>
