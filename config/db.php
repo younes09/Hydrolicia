@@ -27,6 +27,8 @@ try {
         `name` VARCHAR(255) NOT NULL,
         `email` VARCHAR(255) NOT NULL,
         `course_id` VARCHAR(50) NOT NULL,
+        `phone` VARCHAR(50) DEFAULT NULL,
+        `status` VARCHAR(50) DEFAULT 'En attente',
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;");
 
@@ -85,6 +87,26 @@ try {
         `email` VARCHAR(255) NOT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;");
+
+    // Migration: Add status column to registrations if it does not exist
+    try {
+        $checkStatus = $pdo->query("SHOW COLUMNS FROM `registrations` LIKE 'status'");
+        if ($checkStatus->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `registrations` ADD `status` VARCHAR(50) DEFAULT 'En attente' AFTER `course_id`");
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+
+    // Migration: Add phone column to registrations if it does not exist
+    try {
+        $checkPhone = $pdo->query("SHOW COLUMNS FROM `registrations` LIKE 'phone'");
+        if ($checkPhone->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `registrations` ADD `phone` VARCHAR(50) DEFAULT NULL AFTER `email`");
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
 
     // Trainings table
     $pdo->exec("CREATE TABLE IF NOT EXISTS `trainings` (

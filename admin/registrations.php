@@ -19,6 +19,33 @@ try {
     // Fail silently
 }
 
+// Check for actions (status updates)
+if (isset($_GET['action']) && isset($_GET['id'])) {
+    $action = $_GET['action'];
+    $id = intval($_GET['id']);
+    try {
+        if ($action === 'confirm') {
+            $stmt = $pdo->prepare("UPDATE `registrations` SET `status` = 'Confirmé' WHERE `id` = :id");
+            $stmt->execute(['id' => $id]);
+            $message = "L'inscription a été marquée comme confirmée.";
+        } elseif ($action === 'pay') {
+            $stmt = $pdo->prepare("UPDATE `registrations` SET `status` = 'Payé' WHERE `id` = :id");
+            $stmt->execute(['id' => $id]);
+            $message = "Le paiement a été enregistré avec succès.";
+        } elseif ($action === 'cancel') {
+            $stmt = $pdo->prepare("UPDATE `registrations` SET `status` = 'Annulé' WHERE `id` = :id");
+            $stmt->execute(['id' => $id]);
+            $message = "L'inscription a été annulée.";
+        } elseif ($action === 'pending') {
+            $stmt = $pdo->prepare("UPDATE `registrations` SET `status` = 'En attente' WHERE `id` = :id");
+            $stmt->execute(['id' => $id]);
+            $message = "L'inscription a été remise en attente.";
+        }
+    } catch (Exception $e) {
+        $err_message = "Erreur lors du changement de statut : " . $e->getMessage();
+    }
+}
+
 // Check for delete action
 if (isset($_GET['delete'])) {
     $delete_id = intval($_GET['delete']);
@@ -33,15 +60,26 @@ if (isset($_GET['delete'])) {
 
 // Filtering
 $course_filter = isset($_GET['course_filter']) ? trim($_GET['course_filter']) : '';
+$status_filter = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
 
 // Fetch all registrations
 try {
     $sql = "SELECT * FROM `registrations`";
+    $where_clauses = [];
     $params = [];
     
     if (!empty($course_filter)) {
-        $sql .= " WHERE `course_id` = :course";
+        $where_clauses[] = "`course_id` = :course";
         $params['course'] = $course_filter;
+    }
+    
+    if (!empty($status_filter)) {
+        $where_clauses[] = "`status` = :status";
+        $params['status'] = $status_filter;
+    }
+    
+    if (!empty($where_clauses)) {
+        $sql .= " WHERE " . implode(" AND ", $where_clauses);
     }
     
     $sql .= " ORDER BY `id` DESC";
@@ -89,8 +127,18 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-2 mt-4">
-            <?php if (!empty($course_filter)): ?>
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold mb-1">Filtrer par statut :</label>
+            <select name="status_filter" class="form-select" onchange="this.form.submit()">
+                <option value="">Tous les statuts</option>
+                <option value="En attente" <?php echo ($status_filter == 'En attente') ? 'selected' : ''; ?>>En attente</option>
+                <option value="Confirmé" <?php echo ($status_filter == 'Confirmé') ? 'selected' : ''; ?>>Confirmé</option>
+                <option value="Payé" <?php echo ($status_filter == 'Payé') ? 'selected' : ''; ?>>Payé</option>
+                <option value="Annulé" <?php echo ($status_filter == 'Annulé') ? 'selected' : ''; ?>>Annulé</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end mt-4">
+            <?php if (!empty($course_filter) || !empty($status_filter)): ?>
                 <a href="registrations.php" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-x-circle me-1"></i>Réinitialiser</a>
             <?php endif; ?>
         </div>
@@ -114,7 +162,8 @@ try {
                         <th>Adresse E-mail</th>
                         <th>Formation sélectionnée</th>
                         <th>Date d'inscription</th>
-                        <th class="text-end">Actions</th>
+                        <th>Statut</th>
+                        <th class="text-end" style="min-width: 180px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -129,9 +178,18 @@ try {
                                 </div>
                             </td>
                             <td>
-                                <a href="mailto:<?php echo htmlspecialchars($reg['email']); ?>" class="text-decoration-none text-dark">
-                                    <i class="bi bi-envelope me-1 text-muted"></i><?php echo htmlspecialchars($reg['email']); ?>
-                                </a>
+                                <div class="mb-1">
+                                    <a href="mailto:<?php echo htmlspecialchars($reg['email']); ?>" class="text-decoration-none text-dark">
+                                        <i class="bi bi-envelope me-1 text-muted small"></i><?php echo htmlspecialchars($reg['email']); ?>
+                                    </a>
+                                </div>
+                                <?php if (!empty($reg['phone'])): ?>
+                                    <div>
+                                        <a href="tel:<?php echo htmlspecialchars($reg['phone']); ?>" class="text-decoration-none text-muted small">
+                                            <i class="bi bi-telephone me-1 small"></i><?php echo htmlspecialchars($reg['phone']); ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2">
@@ -147,15 +205,68 @@ try {
                             <td>
                                 <span class="text-muted"><i class="bi bi-calendar3 me-1"></i><?php echo date('d-m-Y H:i', strtotime($reg['created_at'])); ?></span>
                             </td>
+                            <td>
+                                <?php if ($reg['status'] == 'Payé'): ?>
+                                    <span class="pill-status bg-success bg-opacity-10 text-success"><i class="bi bi-credit-card-2-back-fill me-1"></i>Payé</span>
+                                <?php elseif ($reg['status'] == 'Confirmé'): ?>
+                                    <span class="pill-status bg-primary bg-opacity-10 text-primary"><i class="bi bi-check-circle-fill me-1"></i>Confirmé</span>
+                                <?php elseif ($reg['status'] == 'Annulé'): ?>
+                                    <span class="pill-status bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle-fill me-1"></i>Annulé</span>
+                                <?php else: ?>
+                                    <span class="pill-status bg-warning bg-opacity-10 text-warning"><i class="bi bi-clock-fill me-1"></i>En attente</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-end">
-                                <a href="registrations.php?delete=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>" 
-                                   class="action-btn action-btn-danger" 
-                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cette inscription ?')"
-                                   data-bs-toggle="tooltip" 
-                                   data-bs-placement="top" 
-                                   title="Supprimer l'inscription">
-                                    <i class="bi bi-trash-fill"></i>
-                                </a>
+                                <div class="btn-group gap-1">
+                                    <?php if ($reg['status'] !== 'Confirmé' && $reg['status'] !== 'Payé'): ?>
+                                        <a href="registrations.php?action=confirm&id=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
+                                           class="action-btn action-btn-success" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Confirmer l'inscription">
+                                            <i class="bi bi-check-lg text-success"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ($reg['status'] === 'Confirmé'): ?>
+                                        <a href="registrations.php?action=pay&id=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
+                                           class="action-btn action-btn-success" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Enregistrer le paiement">
+                                            <i class="bi bi-credit-card text-success"></i>
+                                        </a>
+                                    <?php endif; ?>
+
+                                    <?php if ($reg['status'] !== 'Annulé'): ?>
+                                        <a href="registrations.php?action=cancel&id=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
+                                           class="action-btn" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Annuler l'inscription">
+                                            <i class="bi bi-x-circle text-danger"></i>
+                                        </a>
+                                    <?php endif; ?>
+
+                                    <?php if ($reg['status'] === 'Annulé' || $reg['status'] === 'Payé'): ?>
+                                        <a href="registrations.php?action=pending&id=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
+                                           class="action-btn" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Remettre en attente">
+                                            <i class="bi bi-arrow-counterclockwise text-warning"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                    
+                                    <a href="registrations.php?delete=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
+                                       class="action-btn action-btn-danger" 
+                                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cette inscription ?')"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Supprimer l'inscription">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

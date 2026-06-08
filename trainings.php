@@ -113,6 +113,14 @@ try {
                             <input type="email" name="email" class="form-control bg-light border-start-0" placeholder="Ex: larbi@example.com" required>
                         </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Numéro de téléphone</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone text-secondary"></i></span>
+                            <input type="tel" name="phone" class="form-control bg-light border-start-0" placeholder="Ex: 0550123456" required>
+                        </div>
+                    </div>
 
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold">Formation sélectionnée</label>

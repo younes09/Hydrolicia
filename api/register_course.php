@@ -12,8 +12,9 @@ require_once '../config/db.php';
 $name = isset($_POST['name']) ? trim($_POST['name']) : '';
 $email = isset($_POST['email']) ? trim($_POST['email']) : '';
 $course_id = isset($_POST['course_id']) ? trim($_POST['course_id']) : '';
+$phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
 
-if (empty($name) || empty($email) || empty($course_id)) {
+if (empty($name) || empty($email) || empty($course_id) || empty($phone)) {
     echo json_encode(['success' => false, 'message' => 'Veuillez remplir tous les champs obligatoires.']);
     exit;
 }
@@ -34,11 +35,12 @@ try {
     }
 
     // Insert registration
-    $insert = $pdo->prepare("INSERT INTO `registrations` (`name`, `email`, `course_id`) VALUES (:name, :email, :course_id)");
+    $insert = $pdo->prepare("INSERT INTO `registrations` (`name`, `email`, `course_id`, `phone`) VALUES (:name, :email, :course_id, :phone)");
     $insert->execute([
         'name' => $name,
         'email' => $email,
-        'course_id' => $course_id
+        'course_id' => $course_id,
+        'phone' => $phone
     ]);
 
     echo json_encode([

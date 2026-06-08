@@ -7,7 +7,7 @@
             <div class="col-lg-5 col-md-12">
                 <div class="d-flex align-items-center mb-3">
                     <i class="bi bi-droplet-half text-info me-2 fs-3"></i>
-                    <h4 class="text-white mb-0 font-weight-bold">HYDRO<span class="text-info">CONSULT</span></h4>
+                    <h4 class="text-white mb-0 font-weight-bold"><span class="text-info">HYDRO</span>LICIA</h4>
                 </div>
                 <p class="mb-4">
                     La première plateforme digitale intelligente dédiée à la formation, au conseil technique et à la numérisation des services d'ingénierie hydraulique en Algérie.
