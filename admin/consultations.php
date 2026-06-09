@@ -152,9 +152,14 @@ try {
                         <tr>
                             <td>
                                 <div class="fw-bold"><?php echo htmlspecialchars($consult['name']); ?></div>
-                                <a href="mailto:<?php echo htmlspecialchars($consult['email']); ?>" class="small text-muted text-decoration-none">
+                                <a href="mailto:<?php echo htmlspecialchars($consult['email']); ?>" class="small text-muted text-decoration-none d-block">
                                     <i class="bi bi-envelope me-1"></i><?php echo htmlspecialchars($consult['email']); ?>
                                 </a>
+                                <?php if (!empty($consult['phone'])): ?>
+                                    <a href="tel:<?php echo htmlspecialchars($consult['phone']); ?>" class="small text-muted text-decoration-none d-block">
+                                        <i class="bi bi-phone me-1 text-primary"></i><?php echo htmlspecialchars($consult['phone']); ?>
+                                    </a>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div class="fw-semibold"><i class="bi bi-person-badge text-info me-1"></i><?php echo htmlspecialchars($consult['expert_name']); ?></div>

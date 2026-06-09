@@ -37,6 +37,7 @@ try {
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `name` VARCHAR(255) NOT NULL,
         `email` VARCHAR(255) NOT NULL,
+        `phone` VARCHAR(20) DEFAULT NULL,
         `expert_name` VARCHAR(100) NOT NULL,
         `date` DATE NOT NULL,
         `time` TIME NOT NULL,
@@ -51,6 +52,7 @@ try {
         `name` VARCHAR(255) NOT NULL,
         `organization` VARCHAR(255) NOT NULL,
         `email` VARCHAR(255) NOT NULL,
+        `phone` VARCHAR(20) DEFAULT NULL,
         `study_type` VARCHAR(100) NOT NULL,
         `description` TEXT NOT NULL,
         `status` VARCHAR(50) DEFAULT 'Reçu',
@@ -103,6 +105,26 @@ try {
         $checkPhone = $pdo->query("SHOW COLUMNS FROM `registrations` LIKE 'phone'");
         if ($checkPhone->rowCount() == 0) {
             $pdo->exec("ALTER TABLE `registrations` ADD `phone` VARCHAR(50) DEFAULT NULL AFTER `email`");
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+
+    // Migration: Add phone column to consultations if it does not exist
+    try {
+        $checkConsultPhone = $pdo->query("SHOW COLUMNS FROM `consultations` LIKE 'phone'");
+        if ($checkConsultPhone->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `consultations` ADD `phone` VARCHAR(20) DEFAULT NULL AFTER `email`");
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+
+    // Migration: Add phone column to studies if it does not exist
+    try {
+        $checkStudyPhone = $pdo->query("SHOW COLUMNS FROM `studies` LIKE 'phone'");
+        if ($checkStudyPhone->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `studies` ADD `phone` VARCHAR(20) DEFAULT NULL AFTER `email`");
         }
     } catch (Exception $e) {
         // Ignore

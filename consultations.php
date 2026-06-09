@@ -14,6 +14,17 @@ try {
 } catch (Exception $e) {
     // Silently ignore or show error
 }
+
+// Build unique specialty keywords for filter
+$specialties = [];
+foreach ($experts as $exp) {
+    // Extract first keyword before comma or &
+    $parts = preg_split('/[,&]/', $exp['specialty']);
+    $key   = trim($parts[0]);
+    if ($key && !in_array($key, $specialties)) {
+        $specialties[] = $key;
+    }
+}
 ?>
 
 <div class="container my-5">
@@ -28,9 +39,67 @@ try {
     <div class="row g-4">
         <!-- Expert profiles listing -->
         <div class="col-lg-8">
-            <h3 class="fw-bold mb-4 text-primary"><i class="bi bi-people me-2"></i>Nos Experts Disponibles</h3>
-            
-            <div class="row g-4">
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                <h3 class="fw-bold text-primary mb-0"><i class="bi bi-people me-2"></i>Nos Experts Disponibles</h3>
+                <span class="filter-count-badge" id="expertsCount">
+                    <?php echo count($experts); ?> expert<?php echo count($experts) > 1 ? 's' : ''; ?>
+                </span>
+            </div>
+
+            <!-- ===== EXPERT FILTER BAR ===== -->
+            <?php if (!empty($experts)): ?>
+            <div class="expert-filter-bar mb-4">
+                <!-- Search -->
+                <div class="filter-search-box mb-3">
+                    <span class="filter-search-icon"><i class="bi bi-search"></i></span>
+                    <input
+                        type="text"
+                        id="expertSearch"
+                        class="filter-search-input"
+                        placeholder="Rechercher un expert ou une spécialité..."
+                        autocomplete="off"
+                    >
+                    <button class="filter-search-clear d-none" id="btnClearExpertSearch" title="Effacer">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </div>
+
+                <!-- Pills Row -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Status filter -->
+                    <div class="filter-pill-group">
+                        <button class="filter-pill active" data-status="all">
+                            <i class="bi bi-grid me-1"></i> Tous
+                        </button>
+                        <button class="filter-pill" data-status="available">
+                            <i class="bi bi-circle-fill text-success me-1" style="font-size:.55rem;"></i> Disponibles
+                        </button>
+                        <button class="filter-pill" data-status="unavailable">
+                            <i class="bi bi-circle-fill text-danger me-1" style="font-size:.55rem;"></i> Indisponibles
+                        </button>
+                    </div>
+
+                    <!-- Separator -->
+                    <div class="filter-separator d-none d-sm-block"></div>
+
+                    <!-- Specialty select -->
+                    <div class="filter-select-wrapper">
+                        <i class="bi bi-funnel filter-select-icon"></i>
+                        <select id="expertSpecialty" class="filter-select">
+                            <option value="all">Toutes spécialités</option>
+                            <?php foreach ($specialties as $sp): ?>
+                                <option value="<?php echo htmlspecialchars(strtolower($sp)); ?>">
+                                    <?php echo htmlspecialchars($sp); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Experts Grid -->
+            <div class="row g-4" id="expertsGrid">
                 <?php if (empty($experts)): ?>
                     <div class="col-12 text-center py-4 text-muted">
                         <p>Aucun expert disponible pour le moment.</p>
@@ -38,7 +107,6 @@ try {
                 <?php else: ?>
                     <?php foreach ($experts as $exp): ?>
                         <?php
-                            // Class mapping for avatar background color
                             $bg_color_style = '';
                             if ($exp['avatar_color_class'] == 'primary') {
                                 $bg_color_style = 'background-color: rgba(13, 110, 253, 0.1); color: #0d6efd;';
@@ -53,11 +121,17 @@ try {
                             } else {
                                 $bg_color_style = 'background-color: rgba(108, 117, 125, 0.1); color: #6c757d;';
                             }
-                            
                             $is_available = ($exp['status'] === 'Disponible');
+
+                            // specialty keyword for filtering
+                            $specParts   = preg_split('/[,&]/', $exp['specialty']);
+                            $specKeyword = strtolower(trim($specParts[0]));
                         ?>
-                        <div class="col-md-12">
-                            <div class="card bg-white border border-light shadow-sm rounded-4 p-4 mb-3">
+                        <div class="col-md-12 expert-card-col"
+                             data-name="<?php echo strtolower(htmlspecialchars($exp['name'] . ' ' . $exp['specialty'] . ' ' . $exp['bio'])); ?>"
+                             data-status="<?php echo $is_available ? 'available' : 'unavailable'; ?>"
+                             data-specialty="<?php echo htmlspecialchars($specKeyword); ?>">
+                            <div class="card bg-white border border-light shadow-sm rounded-4 p-4 expert-card-item">
                                 <div class="row align-items-center">
                                     <div class="col-md-2 text-center text-md-start">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 70px; height: 70px; <?php echo $bg_color_style; ?>">
@@ -85,6 +159,20 @@ try {
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+            </div>
+
+            <!-- Empty filter state -->
+            <div class="text-center py-5 d-none" id="noExpertResults">
+                <div class="card border-0 shadow-sm p-5 rounded-4 mx-auto" style="max-width: 420px;">
+                    <div class="mb-3">
+                        <span class="no-results-icon"><i class="bi bi-person-x"></i></span>
+                    </div>
+                    <h5 class="fw-bold mb-2">Aucun expert trouvé</h5>
+                    <p class="text-muted small mb-4">Modifiez vos critères de recherche ou réinitialisez les filtres.</p>
+                    <button class="btn btn-outline-primary rounded-pill px-4" id="btnResetExpertFilters">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -120,10 +208,21 @@ try {
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label small fw-bold">Numéro de mobile</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white text-primary border-end-0" style="border-color: rgba(255,255,255,0.3);">
+                                <i class="bi bi-phone"></i>
+                            </span>
+                            <input type="tel" name="phone" class="form-control border-start-0" placeholder="Ex: 0550 123 456" pattern="[0-9+\s\-]{8,15}" required>
+                        </div>
+                        <div class="form-text text-white-50" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Pour vous contacter en cas de modification du créneau.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label small fw-bold">Thématique / Projet</label>
                         <select name="topic" class="form-select" required>
-                            <option value="AEP & Modélisation EPANET">AEP & Modélisation EPANET</option>
-                            <option value="Assainissement & SewerGEMS">Assainissement & SewerGEMS</option>
+                            <option value="AEP &amp; Modélisation EPANET">AEP &amp; Modélisation EPANET</option>
+                            <option value="Assainissement &amp; SewerGEMS">Assainissement &amp; SewerGEMS</option>
                             <option value="Irrigation Goutte-à-Goutte / REUSE">Irrigation Goutte-à-Goutte / REUSE</option>
                             <option value="Étude de rupture de barrage / Crues">Étude de rupture de barrage / Crues</option>
                             <option value="Autre étude de dimensionnement">Autre étude de dimensionnement</option>
@@ -173,7 +272,7 @@ try {
                                     <th>Client / Étudiant</th>
                                     <th>Expert assigné</th>
                                     <th>Projet / Thématique</th>
-                                    <th>Date & Heure</th>
+                                    <th>Date &amp; Heure</th>
                                     <th>Statut</th>
                                 </tr>
                             </thead>
@@ -212,6 +311,91 @@ try {
 </div>
 
 <script>
+// ===== EXPERT FILTER LOGIC =====
+document.addEventListener('DOMContentLoaded', function () {
+
+    const cards        = document.querySelectorAll('.expert-card-col');
+    const searchInput  = document.getElementById('expertSearch');
+    const clearBtn     = document.getElementById('btnClearExpertSearch');
+    const specialtySel = document.getElementById('expertSpecialty');
+    const countBadge   = document.getElementById('expertsCount');
+    const noResults    = document.getElementById('noExpertResults');
+    const resetBtn     = document.getElementById('btnResetExpertFilters');
+
+    if (!searchInput) return; // no experts, nothing to filter
+
+    let activeStatus = 'all';
+
+    // ---- Status pill buttons ----
+    document.querySelectorAll('.filter-pill[data-status]').forEach(pill => {
+        pill.addEventListener('click', function () {
+            document.querySelectorAll('.filter-pill[data-status]').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            activeStatus = this.dataset.status;
+            applyFilters();
+        });
+    });
+
+    // ---- Search ----
+    searchInput.addEventListener('input', function () {
+        clearBtn.classList.toggle('d-none', this.value.length === 0);
+        applyFilters();
+    });
+
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        clearBtn.classList.add('d-none');
+        searchInput.focus();
+        applyFilters();
+    });
+
+    // ---- Specialty select ----
+    specialtySel.addEventListener('change', applyFilters);
+
+    // ---- Reset ----
+    resetBtn.addEventListener('click', resetFilters);
+
+    function resetFilters() {
+        searchInput.value = '';
+        clearBtn.classList.add('d-none');
+        specialtySel.value = 'all';
+        activeStatus = 'all';
+        document.querySelectorAll('.filter-pill[data-status]').forEach(p => p.classList.remove('active'));
+        document.querySelector('.filter-pill[data-status="all"]').classList.add('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query     = searchInput.value.toLowerCase().trim();
+        const specialty = specialtySel.value;
+        let visible = 0;
+
+        cards.forEach(card => {
+            const matchSearch    = query === '' || card.dataset.name.includes(query);
+            const matchStatus    = activeStatus === 'all' || card.dataset.status === activeStatus;
+            const matchSpecialty = specialty === 'all' || card.dataset.specialty.includes(specialty);
+
+            const show = matchSearch && matchStatus && matchSpecialty;
+
+            if (show) {
+                card.classList.remove('filter-hidden');
+                card.classList.add('filter-visible');
+                visible++;
+            } else {
+                card.classList.remove('filter-visible');
+                card.classList.add('filter-hidden');
+            }
+        });
+
+        // Update count
+        countBadge.textContent = visible + ' expert' + (visible > 1 ? 's' : '');
+
+        // Toggle empty state
+        noResults.classList.toggle('d-none', visible > 0);
+    }
+});
+
+// ===== BOOKING LOGIC =====
 function selectExpert(expertName) {
     document.getElementById('expert_name').value = expertName;
     document.getElementById('expert_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -221,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('bookingForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const btnBook = document.getElementById('btnBook');
+        const btnBook     = document.getElementById('btnBook');
         const bookingAlert = document.getElementById('bookingAlert');
         
         btnBook.disabled = true;
@@ -244,15 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 bookingAlert.classList.add('alert-success');
                 bookingAlert.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + data.message;
                 
-                // Clear form
                 document.getElementById('bookingForm').reset();
                 
-                // Refresh bookings table
                 if (data.consultation) {
                     const tableBody = document.getElementById('bookingsTableBody');
-                    
-                    // If table was empty, remove the empty message block
-                    const emptyContainer = tableBody ? null : document.querySelector('.table-responsive');
                     
                     const newRow = `
                         <tr>
@@ -278,16 +457,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (tableBody) {
                         tableBody.insertAdjacentHTML('afterbegin', newRow);
                     } else {
-                        // Reload page to reflect table structures if it was completely empty
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        setTimeout(() => { window.location.reload(); }, 1000);
                     }
                 }
                 
-                setTimeout(() => {
-                    bookingAlert.classList.add('d-none');
-                }, 3000);
+                setTimeout(() => { bookingAlert.classList.add('d-none'); }, 3000);
             } else {
                 bookingAlert.classList.add('alert-danger');
                 bookingAlert.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + data.message;

@@ -92,6 +92,17 @@ try {
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Numéro de téléphone</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 text-primary">
+                                <i class="bi bi-telephone-fill"></i>
+                            </span>
+                            <input type="tel" name="phone" class="form-control bg-light border-0" placeholder="Ex: 0550 123 456" pattern="[0-9+\s\-]{8,15}" required>
+                        </div>
+                        <div class="form-text text-muted" style="font-size: 0.75rem;"><i class="bi bi-info-circle me-1"></i>Un ingénieur vous contactera sous 48h pour échanger sur votre projet.</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Type d'étude hydraulique</label>
                         <select name="study_type" class="form-select bg-light border-0" required>
                             <option value="Modélisation & Calage de Réseau AEP">Modélisation & Calage de Réseau AEP</option>

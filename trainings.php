@@ -10,6 +10,14 @@ try {
 } catch (Exception $e) {
     // Fail silently
 }
+
+// Build unique categories list from badges
+$categories = [];
+foreach ($trainings as $t) {
+    if (!empty($t['badge']) && !in_array($t['badge'], $categories)) {
+        $categories[] = $t['badge'];
+    }
+}
 ?>
 
 <div class="container my-5">
@@ -21,8 +29,63 @@ try {
         </p>
     </div>
 
+    <!-- ===== FILTER BAR ===== -->
+    <div class="filter-bar-wrapper mb-5">
+        <!-- Search Input -->
+        <div class="filter-search-box mb-3">
+            <span class="filter-search-icon"><i class="bi bi-search"></i></span>
+            <input
+                type="text"
+                id="filterSearch"
+                class="filter-search-input"
+                placeholder="Rechercher une formation..."
+                autocomplete="off"
+            >
+            <button class="filter-search-clear d-none" id="btnClearSearch" title="Effacer">
+                <i class="bi bi-x-circle-fill"></i>
+            </button>
+        </div>
+
+        <!-- Filter Controls Row -->
+        <div class="d-flex flex-wrap align-items-center gap-3">
+
+            <!-- Category Pills -->
+            <div class="filter-pill-group" id="categoryFilters">
+                <button class="filter-pill active" data-category="all">
+                    <i class="bi bi-grid-3x3-gap me-1"></i> Toutes
+                </button>
+                <?php foreach ($categories as $cat): ?>
+                    <button class="filter-pill" data-category="<?php echo htmlspecialchars($cat); ?>">
+                        <?php echo htmlspecialchars($cat); ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Separator -->
+            <div class="filter-separator d-none d-md-block"></div>
+
+            <!-- Duration Filter -->
+            <div class="filter-select-wrapper">
+                <i class="bi bi-clock filter-select-icon"></i>
+                <select id="filterDuration" class="filter-select">
+                    <option value="all">Toutes durées</option>
+                    <option value="short">Courte (≤ 20h)</option>
+                    <option value="medium">Moyenne (21–27h)</option>
+                    <option value="long">Longue (≥ 28h)</option>
+                </select>
+            </div>
+
+            <!-- Results count badge -->
+            <div class="ms-auto">
+                <span class="filter-count-badge" id="resultsCount">
+                    <?php echo count($trainings); ?> formation<?php echo count($trainings) > 1 ? 's' : ''; ?>
+                </span>
+            </div>
+        </div>
+    </div>
+
     <!-- Course Cards Grid -->
-    <div class="row g-4">
+    <div class="row g-4" id="trainingsGrid">
         <?php if (empty($trainings)): ?>
             <div class="col-12 text-center py-5">
                 <div class="card border-0 shadow-sm p-5 rounded-4">
@@ -36,7 +99,7 @@ try {
                 <?php
                     // Get program points from newline string
                     $program_points = array_filter(array_map('trim', explode("\n", $course['program'])));
-                    
+
                     // Map badge style
                     $badge_style = $course['badge_style'];
                     $text_color_inline = '';
@@ -44,8 +107,16 @@ try {
                         $badge_style = '';
                         $text_color_inline = 'style="background-color: #f0fdfa; color: #0d9488;"';
                     }
+
+                    // Parse hours for filtering
+                    preg_match('/(\d+)/', $course['duration'], $durationMatch);
+                    $hours = isset($durationMatch[1]) ? (int)$durationMatch[1] : 0;
+                    $durationCategory = $hours <= 20 ? 'short' : ($hours <= 27 ? 'medium' : 'long');
                 ?>
-                <div class="col-lg-6">
+                <div class="col-lg-6 training-card-col"
+                     data-title="<?php echo strtolower(htmlspecialchars($course['title'] . ' ' . $course['description'])); ?>"
+                     data-category="<?php echo htmlspecialchars($course['badge']); ?>"
+                     data-duration="<?php echo $durationCategory; ?>">
                     <div class="card hydro-card h-100 p-4">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <?php if (!empty($course['badge'])): ?>
@@ -81,6 +152,21 @@ try {
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+
+    <!-- Empty Filter State -->
+    <div class="text-center py-5 d-none" id="noResultsMessage">
+        <div class="card border-0 shadow-sm p-5 rounded-4 mx-auto" style="max-width: 480px;">
+            <div class="mb-3">
+                <span class="no-results-icon"><i class="bi bi-funnel-x"></i></span>
+            </div>
+            <h5 class="fw-bold mb-2">Aucune formation trouvée</h5>
+            <p class="text-muted small mb-4">Essayez de modifier vos critères de recherche ou réinitialisez les filtres.</p>
+            <button class="btn btn-outline-primary rounded-pill px-4" id="btnResetFilters">
+                <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser les filtres
+            </button>
+        </div>
+    </div>
+
 </div>
 
 <!-- Registration Modal -->
@@ -139,7 +225,90 @@ try {
 </div>
 
 <script>
-// JS Logic for Registration AJAX
+// ===== FILTER LOGIC =====
+document.addEventListener('DOMContentLoaded', function () {
+
+    const cards       = document.querySelectorAll('.training-card-col');
+    const searchInput = document.getElementById('filterSearch');
+    const clearBtn    = document.getElementById('btnClearSearch');
+    const durationSel = document.getElementById('filterDuration');
+    const countBadge  = document.getElementById('resultsCount');
+    const noResults   = document.getElementById('noResultsMessage');
+    const resetBtn    = document.getElementById('btnResetFilters');
+
+    let activeCategory = 'all';
+
+    // ---- Category pills ----
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', function () {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            activeCategory = this.dataset.category;
+            applyFilters();
+        });
+    });
+
+    // ---- Search input ----
+    searchInput.addEventListener('input', function () {
+        clearBtn.classList.toggle('d-none', this.value.length === 0);
+        applyFilters();
+    });
+
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        clearBtn.classList.add('d-none');
+        searchInput.focus();
+        applyFilters();
+    });
+
+    // ---- Duration select ----
+    durationSel.addEventListener('change', applyFilters);
+
+    // ---- Reset button (empty state) ----
+    resetBtn.addEventListener('click', resetFilters);
+
+    function resetFilters() {
+        searchInput.value = '';
+        clearBtn.classList.add('d-none');
+        durationSel.value = 'all';
+        activeCategory = 'all';
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('.filter-pill[data-category="all"]').classList.add('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const query    = searchInput.value.toLowerCase().trim();
+        const duration = durationSel.value;
+
+        let visible = 0;
+
+        cards.forEach(card => {
+            const matchSearch   = query === '' || card.dataset.title.includes(query);
+            const matchCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
+            const matchDuration = duration === 'all' || card.dataset.duration === duration;
+
+            const show = matchSearch && matchCategory && matchDuration;
+
+            if (show) {
+                card.classList.remove('filter-hidden');
+                card.classList.add('filter-visible');
+                visible++;
+            } else {
+                card.classList.remove('filter-visible');
+                card.classList.add('filter-hidden');
+            }
+        });
+
+        // Update count badge
+        countBadge.textContent = visible + ' formation' + (visible > 1 ? 's' : '');
+
+        // Toggle empty state
+        noResults.classList.toggle('d-none', visible > 0);
+    }
+});
+
+// ===== REGISTRATION MODAL =====
 let registerModal;
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -170,11 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if(data.success) {
                 formAlert.classList.add('alert-success');
                 formAlert.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + data.message;
-                
-                // Clear fields
                 document.getElementById('registrationForm').reset();
-                
-                // Close modal after 2 seconds
                 setTimeout(() => {
                     registerModal.hide();
                     formAlert.classList.add('d-none');
@@ -197,11 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function openRegisterModal(id, title) {
     document.getElementById('modal_course_id').value = id;
     document.getElementById('modal_course_title').value = title;
-    
-    // Clear status
     const formAlert = document.getElementById('formAlert');
     formAlert.classList.add('d-none');
-    
     registerModal.show();
 }
 </script>

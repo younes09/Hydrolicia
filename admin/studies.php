@@ -152,9 +152,14 @@ try {
                             <td>
                                 <div class="fw-bold"><?php echo htmlspecialchars($study['name']); ?></div>
                                 <div class="small text-info mb-1"><?php echo htmlspecialchars($study['organization']); ?></div>
-                                <a href="mailto:<?php echo htmlspecialchars($study['email']); ?>" class="small text-muted text-decoration-none">
+                                <a href="mailto:<?php echo htmlspecialchars($study['email']); ?>" class="small text-muted text-decoration-none d-block">
                                     <i class="bi bi-envelope me-1"></i><?php echo htmlspecialchars($study['email']); ?>
                                 </a>
+                                <?php if (!empty($study['phone'])): ?>
+                                    <a href="tel:<?php echo htmlspecialchars($study['phone']); ?>" class="small text-muted text-decoration-none d-block">
+                                        <i class="bi bi-telephone-fill me-1 text-primary"></i><?php echo htmlspecialchars($study['phone']); ?>
+                                    </a>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="badge bg-secondary-subtle text-secondary-emphasis"><?php echo htmlspecialchars($study['study_type']); ?></span>
