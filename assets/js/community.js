@@ -1,33 +1,73 @@
 // assets/js/community.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Category Filter Logic
+    // 1. Unified Search & Category Filter Logic
     const categoryLinks = document.querySelectorAll('.category-filter');
-    const questionCards = document.querySelectorAll('.question-card');
+    const searchInput = document.getElementById('forumSearchInput');
+    const noResultsMessage = document.getElementById('noQuestionsMessage');
     
+    let activeCategory = 'all';
+    let searchQuery = '';
+    
+    function filterForumQuestions() {
+        const questionCards = document.querySelectorAll('.forum-question-card');
+        let visibleCount = 0;
+        
+        questionCards.forEach(card => {
+            const cardCategory = card.getAttribute('data-category');
+            
+            // Text matching (title, content, author)
+            const titleText = card.querySelector('h4').innerText.toLowerCase();
+            const contentText = card.querySelector('p.text-secondary').innerText.toLowerCase();
+            const authorText = card.querySelector('strong').innerText.toLowerCase();
+            
+            const matchesCategory = (activeCategory === 'all' || cardCategory === activeCategory);
+            const matchesSearch = (searchQuery === '' || 
+                                   titleText.includes(searchQuery) || 
+                                   contentText.includes(searchQuery) || 
+                                   authorText.includes(searchQuery));
+                                   
+            if (matchesCategory && matchesSearch) {
+                card.style.setProperty('display', 'block', 'important');
+                visibleCount++;
+            } else {
+                card.style.setProperty('display', 'none', 'important');
+            }
+        });
+        
+        // Handle empty search results message
+        if (noResultsMessage) {
+            if (visibleCount === 0) {
+                noResultsMessage.classList.remove('d-none');
+            } else {
+                noResultsMessage.classList.add('d-none');
+            }
+        }
+    }
+    
+    // Category click handler
     categoryLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Remove active class from all filters
             categoryLinks.forEach(l => l.classList.remove('active', 'bg-primary', 'text-white'));
             categoryLinks.forEach(l => l.classList.add('bg-light', 'text-dark'));
             
-            // Add active to current
             this.classList.remove('bg-light', 'text-dark');
             this.classList.add('active', 'bg-primary', 'text-white');
             
-            const selectedCategory = this.getAttribute('data-category');
-            
-            questionCards.forEach(card => {
-                if (selectedCategory === 'all' || card.getAttribute('data-category') === selectedCategory) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            activeCategory = this.getAttribute('data-category');
+            filterForumQuestions();
         });
     });
+    
+    // Search input handler
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            searchQuery = this.value.toLowerCase().trim();
+            filterForumQuestions();
+        });
+    }
 
     // 2. Submit Question AJAX
     const askForm = document.getElementById('askForm');

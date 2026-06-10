@@ -169,7 +169,7 @@ try {
                 <tbody>
                     <?php foreach ($registrations as $reg): ?>
                         <tr>
-                            <td>
+                            <td data-label="Candidat">
                                 <div class="fw-bold d-flex align-items-center">
                                     <div class="avatar-circle me-2 bg-light text-primary d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:32px; height:32px; font-size:0.85rem;">
                                         <?php echo strtoupper(substr($reg['name'], 0, 1)); ?>
@@ -177,7 +177,7 @@ try {
                                     <?php echo htmlspecialchars($reg['name']); ?>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="E-mail">
                                 <div class="mb-1">
                                     <a href="mailto:<?php echo htmlspecialchars($reg['email']); ?>" class="text-decoration-none text-dark">
                                         <i class="bi bi-envelope me-1 text-muted small"></i><?php echo htmlspecialchars($reg['email']); ?>
@@ -191,7 +191,7 @@ try {
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Formation">
                                 <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2">
                                     <?php 
                                         if (isset($trainings_map[$reg['course_id']])) {
@@ -202,10 +202,10 @@ try {
                                     ?>
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Date">
                                 <span class="text-muted"><i class="bi bi-calendar3 me-1"></i><?php echo date('d-m-Y H:i', strtotime($reg['created_at'])); ?></span>
                             </td>
-                            <td>
+                            <td data-label="Statut">
                                 <?php if ($reg['status'] == 'Payé'): ?>
                                     <span class="pill-status bg-success bg-opacity-10 text-success"><i class="bi bi-credit-card-2-back-fill me-1"></i>Payé</span>
                                 <?php elseif ($reg['status'] == 'Confirmé'): ?>
@@ -216,7 +216,7 @@ try {
                                     <span class="pill-status bg-warning bg-opacity-10 text-warning"><i class="bi bi-clock-fill me-1"></i>En attente</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" class="text-end">
                                 <div class="btn-group gap-1">
                                     <?php if ($reg['status'] !== 'Confirmé' && $reg['status'] !== 'Payé'): ?>
                                         <a href="registrations.php?action=confirm&id=<?php echo $reg['id']; ?>&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 

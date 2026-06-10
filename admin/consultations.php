@@ -150,7 +150,7 @@ try {
                 <tbody>
                     <?php foreach ($consultations as $consult): ?>
                         <tr>
-                            <td>
+                            <td data-label="Client">
                                 <div class="fw-bold"><?php echo htmlspecialchars($consult['name']); ?></div>
                                 <a href="mailto:<?php echo htmlspecialchars($consult['email']); ?>" class="small text-muted text-decoration-none d-block">
                                     <i class="bi bi-envelope me-1"></i><?php echo htmlspecialchars($consult['email']); ?>
@@ -161,20 +161,20 @@ try {
                                     </a>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Expert">
                                 <div class="fw-semibold"><i class="bi bi-person-badge text-info me-1"></i><?php echo htmlspecialchars($consult['expert_name']); ?></div>
                             </td>
-                            <td>
-                                <span class="d-inline-block text-truncate" style="max-width: 250px;" title="<?php echo htmlspecialchars($consult['topic']); ?>">
+                            <td data-label="Sujet">
+                                <span class="d-inline-block text-truncate" style="max-width: 200px;" title="<?php echo htmlspecialchars($consult['topic']); ?>">
                                     <?php echo htmlspecialchars($consult['topic']); ?>
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Date & Heure">
                                 <span class="badge bg-secondary-subtle text-secondary-emphasis py-2 px-3">
                                     <i class="bi bi-calendar-event me-1"></i><?php echo date('d-m-Y', strtotime($consult['date'])); ?> à <?php echo substr($consult['time'], 0, 5); ?>
                                 </span>
                             </td>
-                            <td>
+                            <td data-label="Statut">
                                 <?php if ($consult['status'] == 'Confirmé'): ?>
                                     <span class="pill-status bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i> Confirmé</span>
                                 <?php elseif ($consult['status'] == 'Annulé'): ?>
@@ -183,7 +183,7 @@ try {
                                     <span class="pill-status bg-warning bg-opacity-10 text-warning"><i class="bi bi-clock-fill"></i> En attente</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" class="text-end">
                                 <div class="btn-group gap-1">
                                     <?php if ($consult['status'] !== 'Confirmé'): ?>
                                         <a href="consultations.php?action=confirm&id=<?php echo $consult['id']; ?>&expert_filter=<?php echo urlencode($expert_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 

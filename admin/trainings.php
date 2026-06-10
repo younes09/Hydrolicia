@@ -147,7 +147,7 @@ require_once 'includes/header.php';
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle text-nowrap">
                 <thead>
                     <tr>
                         <th style="width: 100px;">Code / ID</th>
@@ -160,10 +160,10 @@ require_once 'includes/header.php';
                 <tbody>
                     <?php foreach ($trainings as $t): ?>
                         <tr>
-                            <td>
+                            <td data-label="Code">
                                 <code class="bg-light text-primary px-2 py-1 rounded small fw-bold"><?php echo htmlspecialchars($t['code']); ?></code>
                             </td>
-                            <td>
+                            <td data-label="Formation">
                                 <div class="mb-1">
                                     <?php if (!empty($t['badge'])): ?>
                                         <span class="badge <?php echo htmlspecialchars($t['badge_style']); ?> rounded-pill px-2 py-1 small me-1">
@@ -173,16 +173,16 @@ require_once 'includes/header.php';
                                 </div>
                                 <h6 class="fw-bold mb-0 text-dark"><?php echo htmlspecialchars($t['title']); ?></h6>
                             </td>
-                            <td>
+                            <td data-label="Description">
                                 <small class="text-muted d-inline-block text-truncate" style="max-width: 320px;" title="<?php echo htmlspecialchars($t['description']); ?>">
                                     <?php echo htmlspecialchars($t['description']); ?>
                                 </small>
                             </td>
-                            <td>
+                            <td data-label="Durée & Tarif">
                                 <div class="small fw-semibold text-primary"><i class="bi bi-clock me-1 text-muted"></i><?php echo htmlspecialchars($t['duration']); ?></div>
                                 <div class="small fw-bold text-success"><i class="bi bi-tag me-1 text-muted"></i><?php echo htmlspecialchars($t['price']); ?></div>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" class="text-end">
                                 <div class="btn-group gap-1">
                                     <button class="action-btn btn-edit" 
                                             data-id="<?php echo $t['id']; ?>"

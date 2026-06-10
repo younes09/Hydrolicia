@@ -290,6 +290,120 @@ $active_page = basename($_SERVER['PHP_SELF']);
                 display: block;
             }
         }
+
+        /* ===== MOBILE TABLE RESPONSIVENESS ===== */
+        @media (max-width: 767.98px) {
+
+            /* Reduce content padding on small screens */
+            .admin-content-body {
+                padding: 16px 12px;
+            }
+
+            .admin-navbar {
+                padding: 12px 16px;
+            }
+
+            /* Transform table into card-style list on mobile */
+            .table-responsive {
+                border: none;
+                border-radius: 0;
+                overflow: visible;
+            }
+
+            .table-responsive table {
+                display: block;
+            }
+
+            .table-responsive thead {
+                display: none; /* Hide the header row */
+            }
+
+            .table-responsive tbody {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .table-responsive tbody tr {
+                display: flex;
+                flex-direction: column;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 14px 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                gap: 6px;
+            }
+
+            /* Each cell becomes a labeled row */
+            .table-responsive tbody td {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 6px 0;
+                border: none;
+                border-bottom: 1px dashed #f1f5f9;
+                font-size: 0.88rem;
+            }
+
+            .table-responsive tbody td:last-child {
+                border-bottom: none;
+                padding-top: 10px;
+                justify-content: flex-start !important;
+                text-align: left !important;
+            }
+
+            /* Show data-label as a prefix */
+            .table-responsive tbody td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 0.75rem;
+                color: var(--admin-text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                min-width: 95px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+
+            /* Action buttons: bigger touch target on mobile */
+            .action-btn {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+            }
+
+            .btn-group.gap-1 {
+                flex-wrap: wrap;
+            }
+
+            /* Badge & status pills */
+            .pill-status {
+                font-size: 0.78rem;
+            }
+
+            /* Admin cards */
+            .admin-card {
+                padding: 16px;
+                border-radius: 12px;
+            }
+
+            /* Filters: stack vertically */
+            .admin-card .row.g-3 > div {
+                padding: 0;
+            }
+        }
+
+        /* Extra small phones */
+        @media (max-width: 479.98px) {
+            .admin-content-body {
+                padding: 12px 8px;
+            }
+            .table-responsive tbody td::before {
+                min-width: 80px;
+                font-size: 0.7rem;
+            }
+        }
     </style>
 </head>
 <body>

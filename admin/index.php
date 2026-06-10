@@ -139,7 +139,7 @@ try {
                 <p class="text-muted small my-3 text-center">Aucune inscription enregistrée.</p>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                    <table class="table table-hover align-middle text-nowrap" style="font-size: 0.9rem;">
                         <thead class="table-light">
                             <tr>
                                 <th>Nom</th>
@@ -187,7 +187,7 @@ try {
                 <p class="text-muted small my-3 text-center">Aucune consultation réservée.</p>
             <?php else: ?>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                    <table class="table table-hover align-middle text-nowrap" style="font-size: 0.9rem;">
                         <thead class="table-light">
                             <tr>
                                 <th>Nom & Thème</th>

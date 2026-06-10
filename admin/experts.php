@@ -139,7 +139,7 @@ require_once 'includes/header.php';
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle text-nowrap">
                 <thead>
                     <tr>
                         <th style="width: 80px;">Avatar</th>
@@ -152,7 +152,7 @@ require_once 'includes/header.php';
                 <tbody>
                     <?php foreach ($experts as $e): ?>
                         <tr>
-                            <td>
+                            <td data-label="Avatar">
                                 <?php
                                     // Class mapping for avatar background color
                                     $bg_color_style = '';
@@ -174,23 +174,23 @@ require_once 'includes/header.php';
                                     <i class="bi <?php echo htmlspecialchars($e['avatar_class']); ?> fs-4"></i>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="Nom & Spécialité">
                                 <h6 class="fw-bold mb-1 text-dark"><?php echo htmlspecialchars($e['name']); ?></h6>
                                 <span class="small text-muted fw-semibold"><?php echo htmlspecialchars($e['specialty']); ?></span>
                             </td>
-                            <td>
+                            <td data-label="Biographie">
                                 <small class="text-muted d-inline-block text-truncate" style="max-width: 350px;" title="<?php echo htmlspecialchars($e['bio']); ?>">
                                     <?php echo htmlspecialchars($e['bio']); ?>
                                 </small>
                             </td>
-                            <td>
+                            <td data-label="Statut">
                                 <?php if ($e['status'] === 'Disponible'): ?>
                                     <span class="pill-status bg-success bg-opacity-10 text-success"><i class="bi bi-circle-fill me-1 small"></i>Disponible</span>
                                 <?php else: ?>
                                     <span class="pill-status bg-danger bg-opacity-10 text-danger"><i class="bi bi-circle-fill me-1 small"></i>Indisponible</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" class="text-end">
                                 <div class="btn-group gap-1">
                                     <button class="action-btn btn-edit" 
                                             data-id="<?php echo $e['id']; ?>"

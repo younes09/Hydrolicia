@@ -99,6 +99,25 @@ try {
                     <p class="text-muted small">Aucun sujet n'a encore été créé sur le forum.</p>
                 </div>
             <?php else: ?>
+                <!-- Search & Filter Area -->
+                <div class="row g-3 mb-4 align-items-center">
+                    <div class="col-md-7">
+                        <div class="position-relative">
+                            <input type="text" id="adminQuestionSearch" class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark" placeholder="Rechercher par auteur, sujet, contenu..." style="font-size: 0.9rem;">
+                            <i class="bi bi-search text-muted position-absolute end-0 top-50 translate-middle-y me-3"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <select id="adminQuestionCategory" class="form-select rounded-pill bg-light border-0 px-3 py-2 text-secondary" style="font-size: 0.9rem;">
+                            <option value="all">Toutes les thématiques</option>
+                            <option value="AEP (Alimentation en Eau Potable)">AEP (Alimentation en Eau Potable)</option>
+                            <option value="Assainissement & Environnement">Assainissement & Environnement</option>
+                            <option value="Irrigation & Économie d'eau">Irrigation & Économie d'eau</option>
+                            <option value="Ouvrages Hydrauliques & Crues">Ouvrages Hydrauliques & Crues</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
@@ -111,9 +130,20 @@ try {
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- No Results message row -->
+                            <tr id="adminQuestionsNoResults" class="d-none">
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-search fs-4 d-block mb-2 text-info"></i>
+                                    Aucun sujet ne correspond à votre recherche.
+                                </td>
+                            </tr>
                             <?php foreach ($questions as $q): ?>
-                                <tr>
-                                    <td>
+                                <tr class="question-row" 
+                                    data-category="<?php echo htmlspecialchars($q['category'], ENT_QUOTES); ?>"
+                                    data-author="<?php echo htmlspecialchars($q['author'], ENT_QUOTES); ?>"
+                                    data-title="<?php echo htmlspecialchars($q['title'], ENT_QUOTES); ?>"
+                                    data-content="<?php echo htmlspecialchars($q['content'], ENT_QUOTES); ?>">
+                                    <td data-label="Auteur">
                                         <div class="fw-bold"><?php echo htmlspecialchars($q['author']); ?></div>
                                         <span class="badge-role <?php 
                                             if ($q['role'] == 'Étudiant' || $q['role'] == 'Etudiant') echo 'badge-student';
@@ -123,23 +153,25 @@ try {
                                             <?php echo htmlspecialchars($q['role']); ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td data-label="Sujet & Catégorie">
                                         <div class="fw-bold text-dark"><?php echo htmlspecialchars($q['title']); ?></div>
                                         <small class="text-info"><?php echo htmlspecialchars($q['category']); ?></small>
                                     </td>
-                                    <td>
+                                    <td data-label="Message">
                                         <span class="d-inline-block text-truncate text-muted" style="max-width: 250px;" title="<?php echo htmlspecialchars($q['content']); ?>">
                                             <?php echo htmlspecialchars($q['content']); ?>
                                         </span>
                                         <button type="button" class="btn btn-sm btn-link p-0 d-block text-start text-decoration-none small" 
-                                                onclick="showDetailModal('<?php echo htmlspecialchars($q['author'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars(json_encode($q['content']), ENT_QUOTES); ?>')">
+                                                onclick="showDetailModal(this)"
+                                                data-author="<?php echo htmlspecialchars($q['author'], ENT_QUOTES); ?>"
+                                                data-content="<?php echo htmlspecialchars($q['content'], ENT_QUOTES); ?>">
                                             Afficher tout
                                         </button>
                                     </td>
-                                    <td>
+                                    <td data-label="Date">
                                         <small class="text-muted"><i class="bi bi-calendar3 me-1"></i><?php echo date('d-m-Y', strtotime($q['created_at'])); ?></small>
                                     </td>
-                                    <td class="text-end">
+                                    <td data-label="Actions" class="text-end">
                                         <a href="forum.php?tab=questions&delete_q=<?php echo $q['id']; ?>" 
                                            class="action-btn action-btn-danger" 
                                            onclick="return confirm('Êtes-vous certain de vouloir supprimer ce sujet du forum ? Cela supprimera également TOUTES les réponses associées.')"
@@ -168,6 +200,16 @@ try {
                     <p class="text-muted small">Aucune contribution n'a été rédigée sur le forum.</p>
                 </div>
             <?php else: ?>
+                <!-- Search Area -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="position-relative">
+                            <input type="text" id="adminReplySearch" class="form-control rounded-pill bg-light border-0 px-4 py-2 text-dark" placeholder="Rechercher par auteur, sujet original ou contenu de la réponse..." style="font-size: 0.9rem;">
+                            <i class="bi bi-search text-muted position-absolute end-0 top-50 translate-middle-y me-3"></i>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
@@ -180,9 +222,19 @@ try {
                             </tr>
                         </thead>
                         <tbody>
+                            <!-- No Results message row -->
+                            <tr id="adminRepliesNoResults" class="d-none">
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-search fs-4 d-block mb-2 text-info"></i>
+                                    Aucune réponse ne correspond à votre recherche.
+                                </td>
+                            </tr>
                             <?php foreach ($replies as $r): ?>
-                                <tr>
-                                    <td>
+                                <tr class="reply-row" 
+                                    data-author="<?php echo htmlspecialchars($r['author'], ENT_QUOTES); ?>"
+                                    data-subject="<?php echo htmlspecialchars($r['question_title'] ?? '', ENT_QUOTES); ?>"
+                                    data-content="<?php echo htmlspecialchars($r['content'], ENT_QUOTES); ?>">
+                                    <td data-label="Auteur">
                                         <div class="fw-bold"><?php echo htmlspecialchars($r['author']); ?></div>
                                         <span class="badge-role <?php 
                                             if ($r['role'] == 'Étudiant' || $r['role'] == 'Etudiant') echo 'badge-student';
@@ -192,7 +244,7 @@ try {
                                             <?php echo htmlspecialchars($r['role']); ?>
                                         </span>
                                     </td>
-                                    <td>
+                                    <td data-label="Sujet original">
                                         <div class="text-muted small text-truncate" style="max-width: 180px;">
                                             <?php if ($r['question_title']): ?>
                                                 <i class="bi bi-link-45deg me-1"></i><?php echo htmlspecialchars($r['question_title']); ?>
@@ -201,19 +253,21 @@ try {
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Réponse">
                                         <span class="d-inline-block text-truncate text-muted" style="max-width: 280px;" title="<?php echo htmlspecialchars($r['content']); ?>">
                                             <?php echo htmlspecialchars($r['content']); ?>
                                         </span>
                                         <button type="button" class="btn btn-sm btn-link p-0 d-block text-start text-decoration-none small" 
-                                                onclick="showDetailModal('<?php echo htmlspecialchars($r['author'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars(json_encode($r['content']), ENT_QUOTES); ?>')">
+                                                onclick="showDetailModal(this)"
+                                                data-author="<?php echo htmlspecialchars($r['author'], ENT_QUOTES); ?>"
+                                                data-content="<?php echo htmlspecialchars($r['content'], ENT_QUOTES); ?>">
                                             Afficher tout
                                         </button>
                                     </td>
-                                    <td>
+                                    <td data-label="Date">
                                         <small class="text-muted"><i class="bi bi-calendar3 me-1"></i><?php echo date('d-m-Y H:i', strtotime($r['created_at'])); ?></small>
                                     </td>
-                                    <td class="text-end">
+                                    <td data-label="Actions" class="text-end">
                                         <a href="forum.php?tab=replies&delete_r=<?php echo $r['id']; ?>" 
                                            class="action-btn action-btn-danger" 
                                            onclick="return confirm('Souhaitez-vous vraiment supprimer définitivement cette réponse ?')"
@@ -263,18 +317,94 @@ let detailModal;
 
 document.addEventListener('DOMContentLoaded', function() {
     detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+
+    // Admin filtering for questions
+    const qSearch = document.getElementById('adminQuestionSearch');
+    const qCategory = document.getElementById('adminQuestionCategory');
+    const qNoResults = document.getElementById('adminQuestionsNoResults');
+    const qRows = document.querySelectorAll('.question-row');
+
+    function filterAdminQuestions() {
+        if (!qRows.length) return;
+        const query = qSearch ? qSearch.value.toLowerCase().trim() : '';
+        const cat = qCategory ? qCategory.value : 'all';
+        let visibleCount = 0;
+
+        qRows.forEach(row => {
+            const author = row.getAttribute('data-author').toLowerCase();
+            const title = row.getAttribute('data-title').toLowerCase();
+            const content = row.getAttribute('data-content').toLowerCase();
+            const category = row.getAttribute('data-category');
+
+            const matchesCategory = (cat === 'all' || category === cat);
+            const matchesQuery = (query === '' || 
+                                  author.includes(query) || 
+                                  title.includes(query) || 
+                                  content.includes(query));
+
+            if (matchesCategory && matchesQuery) {
+                row.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                row.classList.add('d-none');
+            }
+        });
+
+        if (qNoResults) {
+            if (visibleCount === 0) {
+                qNoResults.classList.remove('d-none');
+            } else {
+                qNoResults.classList.add('d-none');
+            }
+        }
+    }
+
+    if (qSearch) qSearch.addEventListener('input', filterAdminQuestions);
+    if (qCategory) qCategory.addEventListener('change', filterAdminQuestions);
+
+    // Admin filtering for replies
+    const rSearch = document.getElementById('adminReplySearch');
+    const rNoResults = document.getElementById('adminRepliesNoResults');
+    const rRows = document.querySelectorAll('.reply-row');
+
+    function filterAdminReplies() {
+        if (!rRows.length) return;
+        const query = rSearch ? rSearch.value.toLowerCase().trim() : '';
+        let visibleCount = 0;
+
+        rRows.forEach(row => {
+            const author = row.getAttribute('data-author').toLowerCase();
+            const subject = row.getAttribute('data-subject').toLowerCase();
+            const content = row.getAttribute('data-content').toLowerCase();
+
+            const matchesQuery = (query === '' || 
+                                  author.includes(query) || 
+                                  subject.includes(query) || 
+                                  content.includes(query));
+
+            if (matchesQuery) {
+                row.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                row.classList.add('d-none');
+            }
+        });
+
+        if (rNoResults) {
+            if (visibleCount === 0) {
+                rNoResults.classList.remove('d-none');
+            } else {
+                rNoResults.classList.add('d-none');
+            }
+        }
+    }
+
+    if (rSearch) rSearch.addEventListener('input', filterAdminReplies);
 });
 
-function showDetailModal(author, contentJson) {
-    document.getElementById('modalAuthor').innerText = author;
-    
-    try {
-        const decodedContent = JSON.parse(contentJson);
-        document.getElementById('modalTextContent').innerText = decodedContent;
-    } catch(e) {
-        document.getElementById('modalTextContent').innerText = contentJson;
-    }
-    
+function showDetailModal(btn) {
+    document.getElementById('modalAuthor').innerText = btn.dataset.author;
+    document.getElementById('modalTextContent').innerText = btn.dataset.content;
     detailModal.show();
 }
 </script>

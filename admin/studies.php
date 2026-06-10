@@ -149,7 +149,7 @@ try {
                 <tbody>
                     <?php foreach ($studies as $study): ?>
                         <tr>
-                            <td>
+                            <td data-label="Demandeur">
                                 <div class="fw-bold"><?php echo htmlspecialchars($study['name']); ?></div>
                                 <div class="small text-info mb-1"><?php echo htmlspecialchars($study['organization']); ?></div>
                                 <a href="mailto:<?php echo htmlspecialchars($study['email']); ?>" class="small text-muted text-decoration-none d-block">
@@ -161,22 +161,24 @@ try {
                                     </a>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Type d'étude">
                                 <span class="badge bg-secondary-subtle text-secondary-emphasis"><?php echo htmlspecialchars($study['study_type']); ?></span>
                             </td>
-                            <td>
+                            <td data-label="Date de dépôt">
                                 <small class="text-muted"><i class="bi bi-calendar-event me-1"></i><?php echo date('d-m-Y', strtotime($study['created_at'])); ?></small>
                             </td>
-                            <td>
+                            <td data-label="Description">
                                 <span class="d-inline-block text-truncate text-muted" style="max-width: 200px;">
                                     <?php echo htmlspecialchars($study['description']); ?>
                                 </span>
                                 <button type="button" class="btn btn-sm btn-link p-0 d-block text-start text-decoration-none small text-accent" 
-                                        onclick="showDescriptionModal(<?php echo $study['id']; ?>, '<?php echo htmlspecialchars($study['name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars(json_encode($study['description']), ENT_QUOTES); ?>')">
+                                        onclick="showDescriptionModal(this)"
+                                        data-owner="<?php echo htmlspecialchars($study['name'], ENT_QUOTES); ?>"
+                                        data-description="<?php echo htmlspecialchars($study['description'], ENT_QUOTES); ?>">
                                     Lire la suite...
                                 </button>
                             </td>
-                            <td>
+                            <td data-label="Statut">
                                 <?php if ($study['status'] == 'Approuvé'): ?>
                                     <span class="pill-status bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i> Approuvé</span>
                                 <?php elseif ($study['status'] == 'Devis envoyé'): ?>
@@ -189,7 +191,7 @@ try {
                                     <span class="pill-status bg-warning bg-opacity-10 text-warning"><i class="bi bi-hourglass-split"></i> Reçu</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Actions" class="text-end">
                                 <div class="btn-group gap-1">
                                     <?php if ($study['status'] === 'Reçu'): ?>
                                         <a href="studies.php?action=analyse&id=<?php echo $study['id']; ?>&type_filter=<?php echo urlencode($type_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>" 
@@ -281,17 +283,9 @@ document.addEventListener('DOMContentLoaded', function() {
     descModal = new bootstrap.Modal(document.getElementById('descriptionModal'));
 });
 
-function showDescriptionModal(id, owner, descJson) {
-    document.getElementById('modalProjectOwner').innerText = owner;
-    
-    // Decode JSON string to original description string
-    try {
-        const decodedDesc = JSON.parse(descJson);
-        document.getElementById('modalDescriptionContent').innerText = decodedDesc;
-    } catch(e) {
-        document.getElementById('modalDescriptionContent').innerText = descJson;
-    }
-    
+function showDescriptionModal(btn) {
+    document.getElementById('modalProjectOwner').innerText = btn.dataset.owner;
+    document.getElementById('modalDescriptionContent').innerText = btn.dataset.description;
     descModal.show();
 }
 </script>

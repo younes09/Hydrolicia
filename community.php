@@ -38,6 +38,12 @@ try {
 
             <!-- Categories Card -->
             <div class="card bg-white border border-light shadow-sm rounded-4 p-4 sticky-lg-top" style="top: 100px; z-index: 10;">
+                <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-search me-2"></i>Recherche</h5>
+                <div class="mb-4 position-relative">
+                    <input type="text" id="forumSearchInput" class="form-control rounded-pill bg-light border-0 px-3 py-2 text-dark" placeholder="Rechercher un sujet..." style="font-size: 0.9rem;">
+                    <i class="bi bi-search text-muted position-absolute end-0 top-50 translate-middle-y me-3"></i>
+                </div>
+
                 <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-funnel-fill me-2"></i>Catégories</h5>
                 <div class="d-flex flex-column gap-2">
                     <a href="#" class="category-filter active btn btn-sm bg-primary text-white text-start rounded-pill py-2 px-3 fw-semibold" data-category="all">
@@ -117,6 +123,13 @@ try {
 
             <!-- List of Questions -->
             <div id="questionsContainer" class="d-flex flex-column gap-4">
+                <!-- Message si recherche vide -->
+                <div id="noQuestionsMessage" class="card p-5 text-center bg-white border border-light shadow-sm rounded-4 text-muted d-none">
+                    <i class="bi bi-search fs-1 mb-2 text-info"></i>
+                    <h5 class="fw-bold text-dark">Aucun sujet ne correspond à votre recherche</h5>
+                    <p class="mb-0 small">Essayez d'utiliser d'autres mots-clés ou de modifier la thématique sélectionnée.</p>
+                </div>
+
                 <?php if (empty($questions)): ?>
                     <div class="card p-5 text-center bg-white border border-light shadow-sm rounded-4 text-muted">
                         <i class="bi bi-chat-dots fs-1 mb-2"></i>
