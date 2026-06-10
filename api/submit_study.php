@@ -31,15 +31,63 @@ if (!preg_match('/^[0-9+\s\-]{8,15}$/', $phone)) {
     exit;
 }
 
+$file_path = null;
+
+if (isset($_FILES['project_file']) && $_FILES['project_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+    $file = $_FILES['project_file'];
+    
+    // Check errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        echo json_encode(['success' => false, 'message' => 'Erreur lors du transfert du fichier.']);
+        exit;
+    }
+    
+    // Check file size (10 MB limit)
+    $max_size = 10 * 1024 * 1024;
+    if ($file['size'] > $max_size) {
+        echo json_encode(['success' => false, 'message' => 'Le fichier est trop volumineux (maximum 10 Mo).']);
+        exit;
+    }
+    
+    // Check allowed extensions
+    $allowed_exts = ['pdf', 'doc', 'docx', 'zip', 'rar', 'dwg', 'inp', 'net'];
+    $filename = $file['name'];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    
+    if (!in_array($ext, $allowed_exts)) {
+        echo json_encode(['success' => false, 'message' => 'Format de fichier non autorisé.']);
+        exit;
+    }
+    
+    // Create destination directory if not exists
+    $upload_dir = '../uploads/studies/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+    
+    // Clean filename and make unique
+    $clean_name = preg_replace('/[^a-zA-Z0-9_-]/', '_', pathinfo($filename, PATHINFO_FILENAME));
+    $new_filename = uniqid('study_', true) . '_' . $clean_name . '.' . $ext;
+    $dest_path = $upload_dir . $new_filename;
+    
+    if (!move_uploaded_file($file['tmp_name'], $dest_path)) {
+        echo json_encode(['success' => false, 'message' => 'Échec de la sauvegarde du fichier sur le serveur.']);
+        exit;
+    }
+    
+    $file_path = $new_filename;
+}
+
 try {
-    $insert = $pdo->prepare("INSERT INTO `studies` (`name`, `organization`, `email`, `phone`, `study_type`, `description`, `status`) VALUES (:name, :organization, :email, :phone, :study_type, :description, 'Reçu')");
+    $insert = $pdo->prepare("INSERT INTO `studies` (`name`, `organization`, `email`, `phone`, `study_type`, `description`, `file_path`, `status`) VALUES (:name, :organization, :email, :phone, :study_type, :description, :file_path, 'Reçu')");
     $insert->execute([
         'name'         => $name,
         'organization' => $organization,
         'email'        => $email,
         'phone'        => $phone,
         'study_type'   => $study_type,
-        'description'  => $description
+        'description'  => $description,
+        'file_path'    => $file_path
     ]);
 
     $lastId = $pdo->lastInsertId();
@@ -54,7 +102,8 @@ try {
             'email'        => $email,
             'phone'        => $phone,
             'study_type'   => $study_type,
-            'description'  => $description
+            'description'  => $description,
+            'file_path'    => $file_path
         ]
     ]);
 

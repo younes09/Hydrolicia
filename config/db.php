@@ -55,6 +55,7 @@ try {
         `phone` VARCHAR(20) DEFAULT NULL,
         `study_type` VARCHAR(100) NOT NULL,
         `description` TEXT NOT NULL,
+        `file_path` VARCHAR(255) DEFAULT NULL,
         `status` VARCHAR(50) DEFAULT 'Reçu',
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;");
@@ -125,6 +126,16 @@ try {
         $checkStudyPhone = $pdo->query("SHOW COLUMNS FROM `studies` LIKE 'phone'");
         if ($checkStudyPhone->rowCount() == 0) {
             $pdo->exec("ALTER TABLE `studies` ADD `phone` VARCHAR(20) DEFAULT NULL AFTER `email`");
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+
+    // Migration: Add file_path column to studies if it does not exist
+    try {
+        $checkStudyFile = $pdo->query("SHOW COLUMNS FROM `studies` LIKE 'file_path'");
+        if ($checkStudyFile->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE `studies` ADD `file_path` VARCHAR(255) DEFAULT NULL AFTER `description`");
         }
     } catch (Exception $e) {
         // Ignore

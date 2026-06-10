@@ -97,10 +97,17 @@ try {
 
 <!-- Filters panel -->
 <div class="admin-card mb-4 p-3">
-    <form method="GET" action="consultations.php" class="row g-3">
+    <form method="GET" action="consultations.php" class="row g-3 align-items-end">
         <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold mb-1">Recherche :</label>
+            <div class="position-relative">
+                <input type="text" id="adminConsultSearch" class="form-control" placeholder="Client, e-mail, téléphone, sujet..." style="font-size: 0.9rem;">
+                <i class="bi bi-search text-muted position-absolute end-0 top-50 translate-middle-y me-3"></i>
+            </div>
+        </div>
+        <div class="col-md-3">
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par expert :</label>
-            <select name="expert_filter" class="form-select" onchange="this.form.submit()">
+            <select name="expert_filter" class="form-select" onchange="this.form.submit()" style="font-size: 0.9rem;">
                 <option value="">Tous les experts</option>
                 <?php foreach ($experts_list as $exp): ?>
                     <option value="<?php echo htmlspecialchars($exp['name']); ?>" <?php echo ($expert_filter == $exp['name']) ? 'selected' : ''; ?>>
@@ -109,18 +116,20 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par statut :</label>
-            <select name="status_filter" class="form-select" onchange="this.form.submit()">
+            <select name="status_filter" class="form-select" onchange="this.form.submit()" style="font-size: 0.9rem;">
                 <option value="">Tous les statuts</option>
                 <option value="En attente" <?php echo ($status_filter == 'En attente') ? 'selected' : ''; ?>>En attente</option>
                 <option value="Confirmé" <?php echo ($status_filter == 'Confirmé') ? 'selected' : ''; ?>>Confirmé</option>
                 <option value="Annulé" <?php echo ($status_filter == 'Annulé') ? 'selected' : ''; ?>>Annulé</option>
             </select>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
+        <div class="col-md-2 d-grid">
             <?php if (!empty($expert_filter) || !empty($status_filter)): ?>
-                <a href="consultations.php" class="btn btn-outline-secondary btn-sm rounded-pill mb-1"><i class="bi bi-x-circle me-1"></i>Réinitialiser les filtres</a>
+                <a href="consultations.php" class="btn btn-outline-secondary rounded-pill btn-sm mb-1 py-2 text-center"><i class="bi bi-x-circle me-1"></i>Réinitialiser</a>
+            <?php else: ?>
+                <div style="height: 38px;"></div>
             <?php endif; ?>
         </div>
     </form>
@@ -148,8 +157,19 @@ try {
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- No Results message row -->
+                    <tr id="adminConsultNoResults" class="d-none">
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-search fs-4 d-block mb-2 text-info"></i>
+                            Aucune consultation ne correspond à votre recherche.
+                        </td>
+                    </tr>
                     <?php foreach ($consultations as $consult): ?>
-                        <tr>
+                        <tr class="consult-row" 
+                            data-name="<?php echo htmlspecialchars($consult['name'], ENT_QUOTES); ?>"
+                            data-email="<?php echo htmlspecialchars($consult['email'], ENT_QUOTES); ?>"
+                            data-phone="<?php echo htmlspecialchars($consult['phone'] ?? '', ENT_QUOTES); ?>"
+                            data-topic="<?php echo htmlspecialchars($consult['topic'] ?? '', ENT_QUOTES); ?>">
                             <td data-label="Client">
                                 <div class="fw-bold"><?php echo htmlspecialchars($consult['name']); ?></div>
                                 <a href="mailto:<?php echo htmlspecialchars($consult['email']); ?>" class="small text-muted text-decoration-none d-block">
@@ -232,6 +252,49 @@ try {
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const consultSearch = document.getElementById('adminConsultSearch');
+    const consultNoResults = document.getElementById('adminConsultNoResults');
+    const consultRows = document.querySelectorAll('.consult-row');
+
+    if (consultSearch) {
+        consultSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            consultRows.forEach(row => {
+                const name = row.getAttribute('data-name').toLowerCase();
+                const email = row.getAttribute('data-email').toLowerCase();
+                const phone = row.getAttribute('data-phone').toLowerCase();
+                const topic = row.getAttribute('data-topic').toLowerCase();
+
+                const matchesQuery = (query === '' || 
+                                      name.includes(query) || 
+                                      email.includes(query) || 
+                                      phone.includes(query) ||
+                                      topic.includes(query));
+
+                if (matchesQuery) {
+                    row.classList.remove('d-none');
+                    visibleCount++;
+                } else {
+                    row.classList.add('d-none');
+                }
+            });
+
+            if (consultNoResults) {
+                if (visibleCount === 0) {
+                    consultNoResults.classList.remove('d-none');
+                } else {
+                    consultNoResults.classList.add('d-none');
+                }
+            }
+        });
+    }
+});
+</script>
 
 <?php
 require_once 'includes/footer.php';

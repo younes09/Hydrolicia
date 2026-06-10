@@ -29,7 +29,15 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             $stmt->execute(['id' => $id]);
             $message = "Le dossier a été marqué comme rejeté.";
         } elseif ($action === 'delete') {
-            $stmt = $pdo->prepare("DELETE FROM `studies` WHERE `id` = :id");
+            // Get file path before deleting and delete the file from the server
+            $stmt = $pdo->prepare("SELECT file_path FROM studies WHERE id = :id");
+            $stmt->execute(['id' => $id]);
+            $file_path = $stmt->fetchColumn();
+            if ($file_path && file_exists('../uploads/studies/' . $file_path)) {
+                unlink('../uploads/studies/' . $file_path);
+            }
+            // Delete from database
+            $stmt = $pdo->prepare("DELETE FROM studies WHERE id = :id");
             $stmt->execute(['id' => $id]);
             $message = "Le dossier d'étude a été supprimé définitivement.";
         }
@@ -174,9 +182,15 @@ try {
                                 <button type="button" class="btn btn-sm btn-link p-0 d-block text-start text-decoration-none small text-accent" 
                                         onclick="showDescriptionModal(this)"
                                         data-owner="<?php echo htmlspecialchars($study['name'], ENT_QUOTES); ?>"
-                                        data-description="<?php echo htmlspecialchars($study['description'], ENT_QUOTES); ?>">
+                                        data-description="<?php echo htmlspecialchars($study['description'], ENT_QUOTES); ?>"
+                                        data-filepath="<?php echo !empty($study['file_path']) ? htmlspecialchars($study['file_path'], ENT_QUOTES) : ''; ?>">
                                     Lire la suite...
                                 </button>
+                                <?php if (!empty($study['file_path'])): ?>
+                                    <a href="../uploads/studies/<?php echo htmlspecialchars($study['file_path']); ?>" target="_blank" class="badge bg-light text-primary border border-primary text-decoration-none mt-1 d-inline-flex align-items-center gap-1 small" style="font-size: 0.75rem;">
+                                        <i class="bi bi-file-earmark-arrow-down-fill"></i> Doc joint
+                                    </a>
+                                <?php endif; ?>
                             </td>
                             <td data-label="Statut">
                                 <?php if ($study['status'] == 'Approuvé'): ?>
@@ -264,9 +278,17 @@ try {
                     <label class="form-label text-muted small fw-bold mb-1">Porteur du Projet :</label>
                     <div id="modalProjectOwner" class="fw-bold text-dark fs-6"></div>
                 </div>
-                <div class="mb-2">
+                <div class="mb-3">
                     <label class="form-label text-muted small fw-bold mb-1">Cahier des charges / Descriptif :</label>
                     <div id="modalDescriptionContent" class="bg-light p-3 rounded-3 text-secondary" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;"></div>
+                </div>
+                <div class="mb-2 d-none" id="modalFileContainer">
+                    <label class="form-label text-muted small fw-bold mb-1">Document joint :</label>
+                    <div>
+                        <a href="#" id="modalFileLink" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="bi bi-file-earmark-arrow-down-fill me-1"></i> Télécharger le document joint
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0">
@@ -286,6 +308,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function showDescriptionModal(btn) {
     document.getElementById('modalProjectOwner').innerText = btn.dataset.owner;
     document.getElementById('modalDescriptionContent').innerText = btn.dataset.description;
+    
+    const fileContainer = document.getElementById('modalFileContainer');
+    const fileLink = document.getElementById('modalFileLink');
+    if (btn.dataset.filepath) {
+        fileLink.href = '../uploads/studies/' + btn.dataset.filepath;
+        fileContainer.classList.remove('d-none');
+    } else {
+        fileLink.href = '#';
+        fileContainer.classList.add('d-none');
+    }
     descModal.show();
 }
 </script>

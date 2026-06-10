@@ -75,7 +75,7 @@ try {
                 
                 <div id="studyAlert" class="alert d-none mb-3" role="alert"></div>
 
-                <form id="studyForm">
+                <form id="studyForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Nom Complet du contact</label>
                         <input type="text" name="name" class="form-control bg-light border-0" placeholder="Ex: Mohamed Khemisti" required>
@@ -113,9 +113,15 @@ try {
                         </select>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Description de votre besoin (débits, linéaire, objectifs...)</label>
-                        <textarea name="description" class="form-control bg-light border-0" rows="4" placeholder="Indiquez brièvement le type de réseau, le linéaire approximatif, la localisation et le délai souhaité..." required></textarea>
+                        <textarea name="description" class="form-control bg-light border-0" rows="3" placeholder="Indiquez brièvement le type de réseau, le linéaire approximatif, la localisation et le délai souhaité..." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-bold">Document joint (Cahier des charges, plans, EPANET... Optionnel)</label>
+                        <input type="file" name="project_file" class="form-control bg-light border-0 text-secondary" id="projectFile" accept=".pdf,.docx,.doc,.zip,.rar,.dwg,.inp,.net" style="font-size: 0.9rem;">
+                        <div class="form-text text-muted" style="font-size: 0.75rem;">Formats acceptés : PDF, Word, ZIP/RAR, CAD (dwg), EPANET (inp, net). Max : 10 Mo.</div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 shadow-md" id="btnSubmitStudy">
@@ -166,6 +172,9 @@ try {
                                             <span class="text-muted d-inline-block text-truncate" style="max-width: 280px;" title="<?php echo htmlspecialchars($study['description']); ?>">
                                                 <?php echo htmlspecialchars($study['description']); ?>
                                             </span>
+                                            <?php if (!empty($study['file_path'])): ?>
+                                                <div class="small text-info mt-1"><i class="bi bi-paperclip me-1"></i>Fichier joint</div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if ($study['status'] == 'Approuvé'): ?>
@@ -237,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="text-muted d-inline-block text-truncate" style="max-width: 280px;" title="${escapeHtml(data.study.description)}">
                                     ${escapeHtml(data.study.description)}
                                 </span>
+                                ${data.study.file_path ? `<div class="small text-info mt-1"><i class="bi bi-paperclip me-1"></i>Fichier joint</div>` : ''}
                             </td>
                             <td>
                                 <span class="pill-status bg-warning bg-opacity-10 text-warning"><i class="bi bi-hourglass-split me-1"></i>Reçu / En analyse</span>

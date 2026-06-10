@@ -115,10 +115,17 @@ try {
 
 <!-- Filter bar -->
 <div class="admin-card mb-4 p-3">
-    <form method="GET" action="registrations.php" class="row g-3 align-items-center">
+    <form method="GET" action="registrations.php" class="row g-3 align-items-end">
         <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold mb-1">Recherche :</label>
+            <div class="position-relative">
+                <input type="text" id="adminRegSearch" class="form-control" placeholder="Nom, e-mail, téléphone..." style="font-size: 0.9rem;">
+                <i class="bi bi-search text-muted position-absolute end-0 top-50 translate-middle-y me-3"></i>
+            </div>
+        </div>
+        <div class="col-md-3">
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par module :</label>
-            <select name="course_filter" class="form-select" onchange="this.form.submit()">
+            <select name="course_filter" class="form-select" onchange="this.form.submit()" style="font-size: 0.9rem;">
                 <option value="">Tous les modules</option>
                 <?php foreach ($trainings_list as $tr): ?>
                     <option value="<?php echo htmlspecialchars($tr['code']); ?>" <?php echo ($course_filter == $tr['code']) ? 'selected' : ''; ?>>
@@ -127,9 +134,9 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label text-muted small fw-bold mb-1">Filtrer par statut :</label>
-            <select name="status_filter" class="form-select" onchange="this.form.submit()">
+            <select name="status_filter" class="form-select" onchange="this.form.submit()" style="font-size: 0.9rem;">
                 <option value="">Tous les statuts</option>
                 <option value="En attente" <?php echo ($status_filter == 'En attente') ? 'selected' : ''; ?>>En attente</option>
                 <option value="Confirmé" <?php echo ($status_filter == 'Confirmé') ? 'selected' : ''; ?>>Confirmé</option>
@@ -137,9 +144,11 @@ try {
                 <option value="Annulé" <?php echo ($status_filter == 'Annulé') ? 'selected' : ''; ?>>Annulé</option>
             </select>
         </div>
-        <div class="col-md-4 d-flex align-items-end mt-4">
+        <div class="col-md-2 d-grid">
             <?php if (!empty($course_filter) || !empty($status_filter)): ?>
-                <a href="registrations.php" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-x-circle me-1"></i>Réinitialiser</a>
+                <a href="registrations.php" class="btn btn-outline-secondary rounded-pill btn-sm mb-1 py-2 text-center"><i class="bi bi-x-circle me-1"></i>Réinitialiser</a>
+            <?php else: ?>
+                <div style="height: 38px;"></div>
             <?php endif; ?>
         </div>
     </form>
@@ -167,8 +176,18 @@ try {
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- No Results message row -->
+                    <tr id="adminRegNoResults" class="d-none">
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-search fs-4 d-block mb-2 text-info"></i>
+                            Aucune inscription ne correspond à votre recherche.
+                        </td>
+                    </tr>
                     <?php foreach ($registrations as $reg): ?>
-                        <tr>
+                        <tr class="reg-row" 
+                            data-name="<?php echo htmlspecialchars($reg['name'], ENT_QUOTES); ?>"
+                            data-email="<?php echo htmlspecialchars($reg['email'], ENT_QUOTES); ?>"
+                            data-phone="<?php echo htmlspecialchars($reg['phone'] ?? '', ENT_QUOTES); ?>">
                             <td data-label="Candidat">
                                 <div class="fw-bold d-flex align-items-center">
                                     <div class="avatar-circle me-2 bg-light text-primary d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:32px; height:32px; font-size:0.85rem;">
@@ -275,6 +294,47 @@ try {
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const regSearch = document.getElementById('adminRegSearch');
+    const regNoResults = document.getElementById('adminRegNoResults');
+    const regRows = document.querySelectorAll('.reg-row');
+
+    if (regSearch) {
+        regSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            regRows.forEach(row => {
+                const name = row.getAttribute('data-name').toLowerCase();
+                const email = row.getAttribute('data-email').toLowerCase();
+                const phone = row.getAttribute('data-phone').toLowerCase();
+
+                const matchesQuery = (query === '' || 
+                                      name.includes(query) || 
+                                      email.includes(query) || 
+                                      phone.includes(query));
+
+                if (matchesQuery) {
+                    row.classList.remove('d-none');
+                    visibleCount++;
+                } else {
+                    row.classList.add('d-none');
+                }
+            });
+
+            if (regNoResults) {
+                if (visibleCount === 0) {
+                    regNoResults.classList.remove('d-none');
+                } else {
+                    regNoResults.classList.add('d-none');
+                }
+            }
+        });
+    }
+});
+</script>
 
 <?php
 require_once 'includes/footer.php';
