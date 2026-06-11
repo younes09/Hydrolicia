@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_logged'] = true;
                 $_SESSION['admin_username'] = $admin['username'];
                 $_SESSION['admin_id'] = $admin['id'];
-                
+
                 header('Location: index.php');
                 exit;
             } else {
@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Custom styling with glassmorphism and premium aesthetics -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
-        
+
         :root {
             --bg-gradient: linear-gradient(135deg, #0f172a 0%, #0284c7 100%);
             --glass-bg: rgba(15, 23, 42, 0.45);
@@ -82,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             z-index: 0;
             opacity: 0.5;
         }
+
         .blob-1 {
             width: 300px;
             height: 300px;
@@ -90,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: 10%;
             animation: float-blob-1 12s infinite alternate;
         }
+
         .blob-2 {
             width: 400px;
             height: 400px;
@@ -100,12 +103,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         @keyframes float-blob-1 {
-            0% { transform: translateY(0) scale(1); }
-            100% { transform: translateY(50px) scale(1.2); }
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(50px) scale(1.2);
+            }
         }
+
         @keyframes float-blob-2 {
-            0% { transform: translateY(0) scale(1.1); }
-            100% { transform: translateY(-60px) scale(0.9); }
+            0% {
+                transform: translateY(0) scale(1.1);
+            }
+
+            100% {
+                transform: translateY(-60px) scale(0.9);
+            }
         }
 
         .login-container {
@@ -222,8 +236,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             gap: 10px;
         }
+
+        /* Pour les navigateurs modernes */
+        .form-control::placeholder {
+            color: #94a3b8 !important; /* Remplacez par la couleur de votre choix */
+            opacity: 1; /* Nécessaire pour Firefox qui applique une opacité par défaut */
+        }
+
+        /* Optionnel : Pour la compatibilité avec les anciens navigateurs */
+        .form-control::-webkit-input-placeholder {
+            color: #94a3b8 !important;
+        }
+        .form-control::-moz-placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+        .form-control:-ms-input-placeholder {
+            color: #94a3b8 !important;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Background glowing graphics -->
@@ -236,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="bi bi-droplet-half"></i>
                 <span>HYDRO<span style="color: #38bdf8;">LICIA</span></span>
             </a>
-            
+
             <h5 class="text-white-50 mb-4 fw-normal">Espace d'Administration</h5>
 
             <?php if (!empty($error)): ?>
@@ -251,7 +284,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="username" class="form-label">Nom d'utilisateur</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-                        <input type="text" name="username" id="username" class="form-control" placeholder="Entrez votre identifiant" required autocomplete="username">
+                        <input type="text" name="username" id="username" class="form-control"
+                            placeholder="Entrez votre identifiant" required autocomplete="username">
                     </div>
                 </div>
 
@@ -259,15 +293,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="password" class="form-label">Mot de passe</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                        <input type="password" name="password" id="password" class="form-control" placeholder="Entrez votre mot de passe" required autocomplete="current-password">
+                        <input type="password" name="password" id="password" class="form-control"
+                            placeholder="Entrez votre mot de passe" required autocomplete="current-password">
                     </div>
                 </div>
+
+                <!-- note pour user and pass admin -->
+                <p class="text-white-50 mb-4 fw-normal text-start" style="font-size: 0.8rem;">
+                    Identifiant : <strong class="text-white">admin</strong><br>
+                    Mot de passe : <strong class="text-white">AdminHydro2026</strong>
+                </p>
 
                 <button type="submit" class="btn btn-login w-100">
                     Se connecter <i class="bi bi-box-arrow-in-right ms-1"></i>
                 </button>
             </form>
-
             <a href="../index.php" class="back-to-site">
                 <i class="bi bi-arrow-left me-1"></i> Retour au site public
             </a>
@@ -275,4 +315,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
 </body>
+
 </html>

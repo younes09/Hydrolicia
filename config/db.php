@@ -262,7 +262,7 @@ try {
     if ($stmtAdmin->fetchColumn() == 0) {
         $username = 'admin';
         $email = 'admin@hydrolicia.dz';
-        $passHash = password_hash('AdminHydro2026!', PASSWORD_BCRYPT);
+        $passHash = password_hash('AdminHydro2026', PASSWORD_BCRYPT);
         $insertAdmin = $pdo->prepare("INSERT INTO `admins` (`username`, `password_hash`, `email`) VALUES (:username, :password, :email)");
         $insertAdmin->execute([
             'username' => $username,
