@@ -1,6 +1,42 @@
 <?php
 // admin/consultations.php
 require_once '../config/db.php';
+
+// ─── CSV Export ─────────────────────────────────────────────────────────────────────
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $exp_expert = isset($_GET['expert_filter']) ? trim($_GET['expert_filter']) : '';
+    $exp_status = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
+
+    $sql_exp = "SELECT * FROM `consultations`";
+    $where_exp = []; $params_exp = [];
+    if (!empty($exp_expert)) { $where_exp[] = '`expert_name` = :expert'; $params_exp['expert'] = $exp_expert; }
+    if (!empty($exp_status)) { $where_exp[] = '`status` = :status'; $params_exp['status'] = $exp_status; }
+    if ($where_exp) $sql_exp .= ' WHERE ' . implode(' AND ', $where_exp);
+    $sql_exp .= ' ORDER BY `date` DESC, `time` DESC';
+    $stmt_exp = $pdo->prepare($sql_exp);
+    $stmt_exp->execute($params_exp);
+    $rows_exp = $stmt_exp->fetchAll();
+
+    $filename = 'consultations_' . date('Ymd_His') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+    fputcsv($out, ['ID', 'Client', 'Email', 'Téléphone', 'Expert', 'Sujet', 'Date', 'Heure', 'Statut'], ';');
+    foreach ($rows_exp as $r) {
+        fputcsv($out, [
+            $r['id'], $r['name'], $r['email'],
+            $r['phone'] ?? '', $r['expert_name'],
+            $r['topic'], $r['date'], substr($r['time'], 0, 5),
+            $r['status']
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 require_once 'includes/header.php';
 
 $message = '';
@@ -131,6 +167,12 @@ try {
             <?php else: ?>
                 <div style="height: 38px;"></div>
             <?php endif; ?>
+        </div>
+        <div class="col-md-12 d-flex justify-content-end mt-1">
+            <a href="consultations.php?export=csv&expert_filter=<?php echo urlencode($expert_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>"
+               class="btn btn-sm btn-success rounded-pill px-3">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exporter CSV
+            </a>
         </div>
     </form>
 </div>

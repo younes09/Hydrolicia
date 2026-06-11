@@ -1,6 +1,43 @@
 <?php
 // admin/studies.php
 require_once '../config/db.php';
+
+// ─── CSV Export ─────────────────────────────────────────────────────────────────────
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $exp_status = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
+    $exp_type   = isset($_GET['type_filter'])   ? trim($_GET['type_filter'])   : '';
+
+    $sql_exp = "SELECT * FROM `studies`";
+    $where_exp = []; $params_exp = [];
+    if (!empty($exp_status)) { $where_exp[] = '`status` = :status'; $params_exp['status'] = $exp_status; }
+    if (!empty($exp_type))   { $where_exp[] = '`study_type` = :type'; $params_exp['type'] = $exp_type; }
+    if ($where_exp) $sql_exp .= ' WHERE ' . implode(' AND ', $where_exp);
+    $sql_exp .= ' ORDER BY `id` DESC';
+    $stmt_exp = $pdo->prepare($sql_exp);
+    $stmt_exp->execute($params_exp);
+    $rows_exp = $stmt_exp->fetchAll();
+
+    $filename = 'etudes_' . date('Ymd_His') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+    fputcsv($out, ['ID', 'Nom', 'Organisation', 'Email', 'Téléphone', 'Type d’étude', 'Description', 'Statut', 'Date soumission'], ';');
+    foreach ($rows_exp as $r) {
+        fputcsv($out, [
+            $r['id'], $r['name'], $r['organization'],
+            $r['email'], $r['phone'] ?? '',
+            $r['study_type'], $r['description'],
+            $r['status'],
+            date('d/m/Y H:i', strtotime($r['created_at']))
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 require_once 'includes/header.php';
 
 $message = '';
@@ -125,10 +162,14 @@ try {
                 <option value="Rejeté" <?php echo ($status_filter == 'Rejeté') ? 'selected' : ''; ?>>Rejeté</option>
             </select>
         </div>
-        <div class="col-md-4 d-flex align-items-end">
+        <div class="col-md-4 d-flex align-items-end gap-2">
             <?php if (!empty($type_filter) || !empty($status_filter)): ?>
                 <a href="studies.php" class="btn btn-outline-secondary btn-sm rounded-pill mb-1"><i class="bi bi-x-circle me-1"></i>Réinitialiser</a>
             <?php endif; ?>
+            <a href="studies.php?export=csv&status_filter=<?php echo urlencode($status_filter); ?>&type_filter=<?php echo urlencode($type_filter); ?>"
+               class="btn btn-sm btn-success rounded-pill px-3 mb-1">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exporter CSV
+            </a>
         </div>
     </form>
 </div>

@@ -22,6 +22,12 @@ $count_studies_total = 0;
 $count_studies_pending = 0;
 $count_forum_questions = 0;
 
+// Chart data
+$chart_reg_labels = [];
+$chart_reg_data = [];
+$chart_consult_statuses = ['En attente' => 0, 'Confirmé' => 0, 'Annulé' => 0];
+$chart_top_courses = [];
+
 try {
     $count_registrations = $pdo->query("SELECT COUNT(*) FROM `registrations`")->fetchColumn();
     $count_consultations_total = $pdo->query("SELECT COUNT(*) FROM `consultations`")->fetchColumn();
@@ -34,6 +40,35 @@ try {
     $recent_registrations = $pdo->query("SELECT * FROM `registrations` ORDER BY `id` DESC LIMIT 5")->fetchAll();
     $recent_consultations = $pdo->query("SELECT * FROM `consultations` ORDER BY `id` DESC LIMIT 5")->fetchAll();
     $recent_studies = $pdo->query("SELECT * FROM `studies` ORDER BY `id` DESC LIMIT 5")->fetchAll();
+
+    // --- Chart 1: Weekly registrations (last 8 weeks) ---
+    for ($i = 7; $i >= 0; $i--) {
+        $week_start = date('Y-m-d', strtotime("-$i week Monday"));
+        $week_end   = date('Y-m-d', strtotime("-$i week Sunday"));
+        $label      = 'S' . date('W', strtotime($week_start));
+        $stmt_w = $pdo->prepare("SELECT COUNT(*) FROM `registrations` WHERE DATE(`created_at`) BETWEEN :s AND :e");
+        $stmt_w->execute(['s' => $week_start, 'e' => $week_end]);
+        $chart_reg_labels[] = $label;
+        $chart_reg_data[]   = (int)$stmt_w->fetchColumn();
+    }
+
+    // --- Chart 2: Consultations by status ---
+    $rows_consult = $pdo->query("SELECT `status`, COUNT(*) as cnt FROM `consultations` GROUP BY `status`")->fetchAll();
+    foreach ($rows_consult as $row) {
+        if (isset($chart_consult_statuses[$row['status']])) {
+            $chart_consult_statuses[$row['status']] = (int)$row['cnt'];
+        } else {
+            $chart_consult_statuses[$row['status']] = (int)$row['cnt'];
+        }
+    }
+
+    // --- Chart 3: Top 5 training courses ---
+    $rows_courses = $pdo->query("SELECT `course_id`, COUNT(*) as cnt FROM `registrations` GROUP BY `course_id` ORDER BY cnt DESC LIMIT 5")->fetchAll();
+    foreach ($rows_courses as $row) {
+        $label = isset($trainings_map[$row['course_id']]) ? $trainings_map[$row['course_id']] : $row['course_id'];
+        $chart_top_courses[] = ['label' => $label, 'count' => (int)$row['cnt']];
+    }
+
 } catch (Exception $e) {
     echo "<div class='alert alert-danger'>Erreur de base de données : " . htmlspecialchars($e->getMessage()) . "</div>";
 }
@@ -292,6 +327,171 @@ try {
         </div>
     </div>
 </div>
+
+<!-- ===== CHARTS SECTION ===== -->
+<div class="row mt-2">
+    <!-- Chart 1: Weekly registrations line chart -->
+    <div class="col-lg-7 mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Inscriptions — 8 Dernières Semaines</h5>
+                <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill">Tendance</span>
+            </div>
+            <canvas id="chartRegistrations" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Chart 2: Consultations donut -->
+    <div class="col-lg-5 mb-4">
+        <div class="admin-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Statuts des Consultations</h5>
+                <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill">Répartition</span>
+            </div>
+            <div style="max-height: 220px; display:flex; align-items:center; justify-content:center;">
+                <canvas id="chartConsultations"></canvas>
+            </div>
+            <div id="consultLegend" class="mt-3 d-flex flex-wrap gap-2 justify-content-center" style="font-size:0.82rem;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart 3: Top formations bar chart -->
+<?php if (!empty($chart_top_courses)): ?>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2 text-success"></i>Top Formations les Plus Demandées</h5>
+                <span class="badge bg-success-subtle text-success-emphasis rounded-pill">Classement</span>
+            </div>
+            <canvas id="chartCourses" height="80"></canvas>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Chart.js CDN + initialization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ── Palette & shared defaults ──────────────────────────────────────────
+    const blue   = 'rgba(13, 110, 253, 1)';
+    const blueA  = 'rgba(13, 110, 253, 0.15)';
+    const colors = [
+        'rgba(255, 193,   7, 0.85)',  // warning  – En attente
+        'rgba( 25, 135,  84, 0.85)',  // success  – Confirmé
+        'rgba(220,  53,  69, 0.85)',  // danger   – Annulé
+        'rgba( 13, 202, 240, 0.85)',  // info
+        'rgba(111,  66, 193, 0.85)',  // purple
+    ];
+
+    Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+    Chart.defaults.color = '#6c757d';
+
+    // ── Chart 1 – Weekly registrations (line) ─────────────────────────────
+    const ctxReg = document.getElementById('chartRegistrations')?.getContext('2d');
+    if (ctxReg) {
+        new Chart(ctxReg, {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode($chart_reg_labels); ?>,
+                datasets: [{
+                    label: 'Inscriptions',
+                    data: <?php echo json_encode($chart_reg_data); ?>,
+                    borderColor: blue,
+                    backgroundColor: blueA,
+                    borderWidth: 2.5,
+                    pointBackgroundColor: blue,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} inscription(s)` } } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // ── Chart 2 – Consultations by status (doughnut) ──────────────────────
+    const consultStatuses = <?php echo json_encode(array_keys($chart_consult_statuses)); ?>;
+    const consultCounts   = <?php echo json_encode(array_values($chart_consult_statuses)); ?>;
+    const ctxConsult = document.getElementById('chartConsultations')?.getContext('2d');
+    if (ctxConsult) {
+        new Chart(ctxConsult, {
+            type: 'doughnut',
+            data: {
+                labels: consultStatuses,
+                datasets: [{
+                    data: consultCounts,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.label} : ${ctx.parsed}` } }
+                }
+            }
+        });
+        // Build custom legend
+        const legend = document.getElementById('consultLegend');
+        consultStatuses.forEach((s, i) => {
+            if (consultCounts[i] === 0) return;
+            legend.innerHTML += `<span class="d-flex align-items-center gap-1"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${colors[i]}"></span>${s} <strong>(${consultCounts[i]})</strong></span>`;
+        });
+    }
+
+    // ── Chart 3 – Top courses (horizontal bar) ────────────────────────────
+    <?php if (!empty($chart_top_courses)): ?>
+    const courseLabels = <?php echo json_encode(array_column($chart_top_courses, 'label')); ?>;
+    const courseCounts = <?php echo json_encode(array_column($chart_top_courses, 'count')); ?>;
+    const ctxCourses = document.getElementById('chartCourses')?.getContext('2d');
+    if (ctxCourses) {
+        new Chart(ctxCourses, {
+            type: 'bar',
+            data: {
+                labels: courseLabels,
+                datasets: [{
+                    label: 'Inscriptions',
+                    data: courseCounts,
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.75)',
+                        'rgba(25, 135,  84, 0.75)',
+                        'rgba(255,193,   7, 0.75)',
+                        'rgba(13, 202, 240, 0.75)',
+                        'rgba(111, 66, 193, 0.75)',
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} inscription(s)` } } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    }
+    <?php endif; ?>
+});
+</script>
 
 <?php
 require_once 'includes/footer.php';

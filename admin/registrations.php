@@ -1,6 +1,53 @@
 <?php
 // admin/registrations.php
 require_once '../config/db.php';
+
+// ─── CSV Export (must run before any HTML output) ──────────────────────────
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    $exp_course  = isset($_GET['course_filter'])  ? trim($_GET['course_filter'])  : '';
+    $exp_status  = isset($_GET['status_filter'])  ? trim($_GET['status_filter'])  : '';
+
+    // Re-use trainings map
+    $trainings_map_exp = [];
+    try {
+        $rows_tr = $pdo->query("SELECT `code`, `title` FROM `trainings`")->fetchAll();
+        foreach ($rows_tr as $r) $trainings_map_exp[$r['code']] = $r['title'];
+    } catch (Exception $e) {}
+
+    $sql_exp = "SELECT * FROM `registrations`";
+    $where_exp = []; $params_exp = [];
+    if (!empty($exp_course)) { $where_exp[] = '`course_id` = :course'; $params_exp['course'] = $exp_course; }
+    if (!empty($exp_status)) { $where_exp[] = '`status` = :status'; $params_exp['status'] = $exp_status; }
+    if ($where_exp) $sql_exp .= ' WHERE ' . implode(' AND ', $where_exp);
+    $sql_exp .= ' ORDER BY `id` DESC';
+    $stmt_exp = $pdo->prepare($sql_exp);
+    $stmt_exp->execute($params_exp);
+    $rows_exp = $stmt_exp->fetchAll();
+
+    $filename = 'inscriptions_' . date('Ymd_His') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+    fputcsv($out, ['ID', 'Nom', 'Email', 'Téléphone', 'Formation', 'Statut', 'Date inscription'], ';');
+    foreach ($rows_exp as $r) {
+        $course_label = isset($trainings_map_exp[$r['course_id']]) ? $trainings_map_exp[$r['course_id']] : $r['course_id'];
+        fputcsv($out, [
+            $r['id'],
+            $r['name'],
+            $r['email'],
+            $r['phone'] ?? '',
+            $course_label,
+            $r['status'],
+            date('d/m/Y H:i', strtotime($r['created_at']))
+        ], ';');
+    }
+    fclose($out);
+    exit;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 require_once 'includes/header.php';
 
 $message = '';
@@ -150,6 +197,12 @@ try {
             <?php else: ?>
                 <div style="height: 38px;"></div>
             <?php endif; ?>
+        </div>
+        <div class="col-md-12 d-flex justify-content-end mt-1">
+            <a href="registrations.php?export=csv&course_filter=<?php echo urlencode($course_filter); ?>&status_filter=<?php echo urlencode($status_filter); ?>"
+               class="btn btn-sm btn-success rounded-pill px-3">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exporter CSV
+            </a>
         </div>
     </form>
 </div>
